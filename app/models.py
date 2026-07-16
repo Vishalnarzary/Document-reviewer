@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -53,6 +53,23 @@ class Criterion(BaseModel):
     evidence_terms: list[str] = Field(default_factory=list)
     absence_status: FindingStatus = FindingStatus.NEEDS_REVIEW
     rule: str | None = None
+
+
+class ChecklistCriterionInput(BaseModel):
+    id: str | None = None
+    label: str = Field(min_length=2, max_length=160)
+    scope: Literal["public_web", "internal"] = "public_web"
+    description: str = Field(default="", max_length=1000)
+    evidence_terms: list[str] = Field(default_factory=list, max_length=30)
+    absence_status: FindingStatus = FindingStatus.NEEDS_REVIEW
+    rule: Literal["price_match"] | None = None
+
+
+class ChecklistInput(BaseModel):
+    category: str = Field(min_length=2, max_length=60)
+    display_name: str = Field(min_length=2, max_length=100)
+    aliases: list[str] = Field(default_factory=list, max_length=30)
+    criteria: list[ChecklistCriterionInput] = Field(min_length=1, max_length=40)
 
 
 class EvidenceRecord(BaseModel):

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Evidence-gathering assistant for pre-approval reviewers.">
     <title>Evidence Desk - Pre-Approval Review</title>
-    <link rel="stylesheet" href="/static/styles.css?v=speed-v2">
+    <link rel="stylesheet" href="/static/styles.css?v=checklists-v1">
   </head>
   <body>
     <div class="app-shell">
@@ -31,6 +31,10 @@
           </div>
           <div class="topbar-actions">
             <span class="human-badge"><span aria-hidden="true">●</span> Human decision required</span>
+            <button class="quiet-button icon-button" id="checklistSettingsButton" type="button" aria-label="Manage checklists" title="Manage checklists">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
+              <span>Checklists</span>
+            </button>
             <button class="quiet-button" id="downloadButton" hidden>Download package</button>
           </div>
         </header>
@@ -88,7 +92,35 @@
       </aside>
     </div>
 
+    <dialog class="checklist-dialog" id="checklistDialog" aria-labelledby="checklistDialogTitle">
+      <div class="dialog-shell">
+        <header class="dialog-header">
+          <div><div class="eyebrow">SETTINGS</div><h2 id="checklistDialogTitle">Manage checklists</h2><p>Review the available checklists or add a new form type without changing code.</p></div>
+          <button class="dialog-close" id="closeChecklistDialog" type="button" aria-label="Close checklist settings">&times;</button>
+        </header>
+        <div class="dialog-columns">
+          <section class="checklist-library">
+            <div class="dialog-section-title"><h3>Present checklists</h3><span id="checklistTotal">0</span></div>
+            <div id="checklistLibrary" class="checklist-library-list"></div>
+          </section>
+          <section class="checklist-builder">
+            <div class="dialog-section-title"><h3>Add a checklist</h3></div>
+            <form id="checklistForm">
+              <div class="form-grid">
+                <label><span>Checklist name</span><input id="checklistName" required maxlength="100" placeholder="Example: Art supplies"></label>
+                <label><span>Category ID</span><input id="checklistCategory" required maxlength="60" placeholder="art_supplies"><small>Lowercase ID used by reports.</small></label>
+                <label class="wide"><span>Aliases</span><input id="checklistAliases" placeholder="art supply, creative materials"><small>Comma-separated phrases that may appear on forms.</small></label>
+              </div>
+              <div class="criteria-heading"><div><strong>Checklist items</strong><small>Add public website checks or internal review reminders.</small></div><button id="addCriterionButton" class="quiet-button" type="button">+ Add item</button></div>
+              <div id="criterionEditor" class="criterion-editor"></div>
+              <button class="save-checklist" type="submit">Save checklist</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </dialog>
+
     <div class="toast" id="toast" role="status" hidden></div>
-    <script src="/static/app.js?v=speed-v2" defer></script>
+    <script src="/static/app.js?v=checklists-v1" defer></script>
   </body>
 </html>

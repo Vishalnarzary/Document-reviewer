@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from app.extraction import deterministic_extract, extract_pdf_text
+from app.extraction import _detect_category, deterministic_extract, extract_pdf_text
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -36,3 +36,14 @@ def test_all_sample_categories_are_supported():
         categories.add(deterministic_extract(text, pages, warnings).category)
     assert categories == {"community_class", "coaching", "membership", "hri", "otps", "transition_program", "appeal"}
 
+
+def test_new_checklist_alias_is_used_for_category_detection(tmp_path, monkeypatch):
+    import app.checklists as checklist_module
+
+    custom = """category: creative_materials\ndisplay_name: Creative Materials\naliases: [art supply request, studio materials]\ncriteria:\n  - id: item_visible\n    label: Requested item is visible\n    scope: public_web\n"""
+    (tmp_path / "creative_materials.yaml").write_text(custom, encoding="utf-8")
+    with monkeypatch.context() as scoped:
+        scoped.setattr(checklist_module, "CHECKLIST_DIR", tmp_path)
+        checklist_module.load_checklists.cache_clear()
+        assert _detect_category("Completed ART SUPPLY REQUEST form") == "creative_materials"
+    checklist_module.load_checklists.cache_clear()

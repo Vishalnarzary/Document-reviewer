@@ -13,17 +13,6 @@ from .models import ApplicationData
 from .utils import extract_price, normalize_space
 
 
-CATEGORY_MARKERS = [
-    ("appeal", ["pre-approval appeals form", "appeals form"]),
-    ("transition_program", ["transition program pre-approval"]),
-    ("otps", ["other than personal services", "otps pre-approval"]),
-    ("hri", ["household related items", "household-related items"]),
-    ("membership", ["health club / organizational memberships", "memberships pre-approval"]),
-    ("coaching", ["coaching for parents/spouse", "coaching pre-approval"]),
-    ("community_class", ["community class pre-approval", "community class preapproval"]),
-]
-
-
 def extract_pdf_text(path: Path) -> tuple[str, int, list[str]]:
     warnings: list[str] = []
     pages: list[str] = []
@@ -76,11 +65,20 @@ def _first_group(text: str, patterns: list[str]) -> str | None:
 
 
 def _detect_category(text: str) -> str | None:
+    from .checklists import load_checklists
+
     lowered = text.lower()
-    for category, markers in CATEGORY_MARKERS:
-        if any(marker in lowered for marker in markers):
-            return category
-    return None
+    matches: list[tuple[int, str]] = []
+    for category, checklist in load_checklists().items():
+        phrases = {
+            category.replace("_", " ").lower(),
+            str(checklist.get("display_name", "")).lower(),
+            *(str(alias).lower() for alias in checklist.get("aliases", [])),
+        }
+        for phrase in phrases:
+            if phrase and phrase in lowered:
+                matches.append((len(phrase), category))
+    return max(matches)[1] if matches else None
 
 
 def deterministic_extract(text: str, page_count: int, warnings: list[str]) -> ApplicationData:
@@ -104,7 +102,7 @@ def deterministic_extract(text: str, page_count: int, warnings: list[str]) -> Ap
     url_match = re.search(r"https?://[^\s<>]+", text, re.I)
     url = url_match.group(0).rstrip(".,);]") if url_match else None
 
-    provider = _provider_from_url(url)
+    provider = _provider_from_url(url, text)
 
     item_patterns = {
         "community_class": [r"Class Name\s+Name of Provider/Vendor\s*\n([^\n]+)"],
@@ -197,21 +195,23 @@ def deterministic_extract(text: str, page_count: int, warnings: list[str]) -> Ap
     )
 
 
-def _provider_from_url(url: str | None) -> str | None:
+def _provider_from_url(url: str | None, source_text: str = "") -> str | None:
     if not url:
         return None
     host = re.sub(r"^www\.", "", re.sub(r"^https?://", "", url, flags=re.I), flags=re.I).split("/", 1)[0]
     token = host.split(".")[0].lower()
-    known = {
-        "gallopnyc": "GallopNYC",
-        "graciebarra": "Gracie Barra",
-        "92ny": "92NY",
-        "planetfitness": "Planet Fitness",
-        "brooklynmuseum": "Brooklyn Museum",
-        "amazon": "Amazon",
-        "laguardia": "LaGuardia Community College",
-    }
-    return known.get(token, token.replace("-", " ").title())
+    source_words = re.findall(r"[A-Za-z0-9]+", source_text)
+    for start in range(len(source_words)):
+        combined = ""
+        for end in range(start, min(len(source_words), start + 5)):
+            combined += source_words[end].lower()
+            if combined == token:
+                matched = " ".join(source_words[start : end + 1])
+                return matched.title() if matched.islower() else matched
+            if len(combined) >= len(token):
+                break
+    words = re.split(r"[-_]", token)
+    return " ".join(word.upper() if any(char.isdigit() for char in word) else word.title() for word in words)
 
 
 def _remove_provider_suffix(value: str, provider: str | None) -> str:

@@ -10,14 +10,14 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from .checklists import supported_categories
+from .checklists import checklist_definitions, remove_checklist, save_checklist, supported_categories
 from .config import OUTPUT_DIR, STATIC_DIR
-from .models import ChatRequest
+from .models import ChatRequest, ChecklistInput
 from .storage import store
 from .workflow import workflow
 
 
-ANALYSIS_PIPELINE_VERSION = "gpt-oss-scout-vision-v24"
+ANALYSIS_PIPELINE_VERSION = "dynamic-checklists-vision-v25"
 
 
 app = FastAPI(
@@ -48,6 +48,31 @@ async def health() -> dict:
 @app.get("/api/categories")
 async def categories() -> list[dict[str, str]]:
     return supported_categories()
+
+
+@app.get("/api/checklists")
+async def list_checklists() -> list[dict]:
+    return checklist_definitions()
+
+
+@app.post("/api/checklists", status_code=201)
+async def create_checklist(payload: ChecklistInput) -> dict:
+    try:
+        return save_checklist(payload)
+    except FileExistsError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.delete("/api/checklists/{category}", status_code=204)
+async def delete_checklist(category: str) -> None:
+    try:
+        remove_checklist(category)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/api/reviews")

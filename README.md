@@ -52,14 +52,14 @@ and URL. The stamped screenshot is sent to Groq Vision
 prices embedded in images, graphics, and pricing cards that text extraction cannot reach.
 
 **Recovery for stale links and protected pricing pages**
-The crawler follows relevant same-site links and can normalize known retired application
-URLs to the provider's current official content page. For example, Brooklyn Museum's old
-`/join` link is recovered to `/support/membership`, where the requested Individual level
-and its $80 annual price are published. Location defaults are applied only to recognized
-providers whose public price genuinely requires a club/location selection; New York paths
-are never generated for unrelated websites. If readable text is unavailable or a price is
-embedded in an image, the Groq Vision track analyses the captured page before the item is
-sent for manual review.
+The crawler ranks and follows relevant same-site links using the requested item, checklist
+terms, and common pricing language. It does not contain provider names, provider-specific
+URLs, or prewritten prices. When a real location field is visible, Playwright can fill the
+safe New York default and continue to the public pricing view; it never invents `/gyms`,
+`/clubs`, or location URLs. If readable text is unavailable or a price is embedded in an
+image, the Groq Vision track analyses the captured page before the item is sent for manual
+review. Anti-bot pages that cannot be read remain `Needs Review` rather than receiving a
+hardcoded conclusion.
 
 **Cross-validation — 5-state confidence**
 
@@ -240,7 +240,23 @@ Each folder contains:
 
 ## How to add a new form type or checklist
 
-**No code changes are needed.** Add a new YAML file to `config/checklists/`:
+### From the reviewer interface
+
+1. Select the **Checklists** icon in the top-right toolbar.
+2. Review the existing checklist cards and expand one to see all its items.
+3. Select **Add item** for each public website check or internal review reminder.
+4. Choose **Match website price to application** only when that item compares prices.
+5. Select **Save checklist**. The new category is immediately available to PDF category
+   detection and Groq analysis; no restart is required.
+
+The same settings panel can remove a checklist after confirmation. Existing completed
+reports keep their saved findings, but future reviews cannot use a removed checklist.
+Checklist changes are stored as YAML files in `config/checklists/`, so deployments need a
+writable persistent volume if settings must survive a redeploy.
+
+### Manual YAML option
+
+No code changes are needed. You can also add a YAML file directly to `config/checklists/`:
 
 ```yaml
 # config/checklists/my_new_category.yaml
@@ -279,8 +295,9 @@ criteria:
 | `rule: price_match` | — | Enables two-stage price extraction to avoid matching fundraising totals against the form fee |
 | `absence_status: Needs Review` | — | For negative-evidence criteria (e.g. "no college credit") where absence is ambiguous |
 
-The tool picks up the new file automatically on next startup. No code changes, no restart
-needed if the app is already running — categories reload on each request.
+The tool validates and reloads checklist files automatically. Categories and aliases are
+also supplied dynamically to the Groq extraction prompt; they are not restricted to the
+seven sample categories.
 
 ---
 
@@ -290,10 +307,10 @@ needed if the app is already running — categories reload on each request.
 .\.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-45 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
+46 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
 normalization, two-stage price classification, checklist evaluation, HRI/OTPS exclusion
 detection, dual-track cross-validation, screenshot overlay correctness, report generation,
-evidence manifest integrity, protected-provider recovery, provider-specific location routing,
+evidence manifest integrity, dynamic checklist management, same-site navigation safeguards,
 rate-limit retry logic (6 × 10 s), and SSRF protection.
 
 ---

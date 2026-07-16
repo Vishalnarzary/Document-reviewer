@@ -1,4 +1,4 @@
-const state = { current: null, reviews: [], busy: false };
+const state = { current: null, reviews: [], checklists: [], busy: false, categoryEdited: false };
 const $ = (selector) => document.querySelector(selector);
 const fileInput = $("#fileInput");
 const uploadCard = $("#uploadCard");
@@ -221,6 +221,106 @@ function resetView() {
   renderHistory();
 }
 
+function identifier(value = "") {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 60);
+}
+
+function criterionRow(values = {}) {
+  const row = document.createElement("div");
+  row.className = "criterion-row";
+  row.innerHTML = `<div class="criterion-row-head"><strong>Checklist item</strong><button type="button" class="remove-criterion" aria-label="Remove this checklist item">Remove</button></div>
+    <label><span>Item to verify</span><input class="criterion-label" required maxlength="160" value="${escapeHtml(values.label || "")}" placeholder="Example: Price is published"></label>
+    <div class="criterion-options">
+      <label><span>Review source</span><select class="criterion-scope"><option value="public_web">Public website</option><option value="internal">Internal review</option></select></label>
+      <label><span>Special comparison</span><select class="criterion-rule"><option value="">None</option><option value="price_match">Match website price to application</option></select></label>
+    </div>
+    <label class="evidence-terms"><span>Evidence words</span><input value="${escapeHtml((values.evidence_terms || []).join(", "))}" placeholder="price, fee, annual"><small>Optional comma-separated words that help find relevant page sections.</small></label>`;
+  row.querySelector(".criterion-scope").value = values.scope || "public_web";
+  row.querySelector(".criterion-rule").value = values.rule || "";
+  row.querySelector(".remove-criterion").addEventListener("click", () => {
+    if ($("#criterionEditor").children.length <= 1) return showToast("A checklist needs at least one item.");
+    row.remove();
+  });
+  $("#criterionEditor").appendChild(row);
+}
+
+function renderChecklistLibrary() {
+  $("#checklistTotal").textContent = `${state.checklists.length} total`;
+  const library = $("#checklistLibrary");
+  if (!state.checklists.length) {
+    library.innerHTML = '<p class="muted small">No checklists are available.</p>';
+    return;
+  }
+  library.innerHTML = state.checklists.map(checklist => `<article class="checklist-card">
+    <div class="checklist-card-head"><div><strong>${escapeHtml(checklist.display_name)}</strong><span>${escapeHtml(checklist.category)}</span></div><button type="button" data-remove-checklist="${escapeHtml(checklist.category)}">Remove</button></div>
+    <details><summary>${checklist.criteria.length} checklist item${checklist.criteria.length === 1 ? "" : "s"}</summary>
+      <ul>${checklist.criteria.map(item => `<li><span>${escapeHtml(item.label)}</span><small>${item.scope === "internal" ? "Internal review" : "Public website"}${item.rule === "price_match" ? " - price comparison" : ""}</small></li>`).join("")}</ul>
+    </details>
+  </article>`).join("");
+  library.querySelectorAll("[data-remove-checklist]").forEach(button => button.addEventListener("click", async () => {
+    const category = button.dataset.removeChecklist;
+    const checklist = state.checklists.find(item => item.category === category);
+    if (!window.confirm(`Remove the ${checklist?.display_name || category} checklist? Existing reports will remain, but new reviews cannot use it.`)) return;
+    button.disabled = true;
+    try {
+      await api(`/api/checklists/${encodeURIComponent(category)}`, {method: "DELETE"});
+      await loadChecklists();
+      showToast("Checklist removed.");
+    } catch (error) { showToast(error.message); button.disabled = false; }
+  }));
+}
+
+async function loadChecklists() {
+  state.checklists = await api("/api/checklists");
+  renderChecklistLibrary();
+}
+
+function resetChecklistForm() {
+  $("#checklistForm").reset();
+  $("#criterionEditor").innerHTML = "";
+  state.categoryEdited = false;
+  criterionRow();
+}
+
+async function openChecklistSettings() {
+  try {
+    await loadChecklists();
+    resetChecklistForm();
+    $("#checklistDialog").showModal();
+  } catch (error) { showToast(error.message); }
+}
+
+async function saveChecklist(event) {
+  event.preventDefault();
+  const criteria = [...document.querySelectorAll(".criterion-row")].map((row, index) => {
+    const label = row.querySelector(".criterion-label").value.trim();
+    return {
+      id: identifier(label) || `criterion_${index + 1}`,
+      label,
+      scope: row.querySelector(".criterion-scope").value,
+      evidence_terms: row.querySelector(".evidence-terms input").value.split(",").map(value => value.trim()).filter(Boolean),
+      absence_status: "Needs Review",
+      rule: row.querySelector(".criterion-rule").value || null
+    };
+  });
+  const payload = {
+    category: identifier($("#checklistCategory").value),
+    display_name: $("#checklistName").value.trim(),
+    aliases: $("#checklistAliases").value.split(",").map(value => value.trim()).filter(Boolean),
+    criteria
+  };
+  const submit = event.submitter;
+  submit.disabled = true;
+  submit.textContent = "Saving...";
+  try {
+    await api("/api/checklists", {method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+    await loadChecklists();
+    resetChecklistForm();
+    showToast("Checklist added and ready for new reviews.");
+  } catch (error) { showToast(error.message); }
+  finally { submit.disabled = false; submit.textContent = "Save checklist"; }
+}
+
 fileInput.addEventListener("change", event => upload(event.target.files[0]));
 ["dragenter", "dragover"].forEach(name => uploadCard.addEventListener(name, event => { event.preventDefault(); uploadCard.classList.add("dragover"); }));
 ["dragleave", "drop"].forEach(name => uploadCard.addEventListener(name, event => { event.preventDefault(); uploadCard.classList.remove("dragover"); }));
@@ -231,8 +331,15 @@ $("#composer").addEventListener("submit", event => { event.preventDefault(); sen
 messageInput.addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(messageInput.value); } });
 messageInput.addEventListener("input", () => { messageInput.style.height = "auto"; messageInput.style.height = `${Math.min(messageInput.scrollHeight, 130)}px`; });
 document.querySelectorAll("[data-prompt]").forEach(button => button.addEventListener("click", () => sendMessage(button.dataset.prompt)));
+$("#checklistSettingsButton").addEventListener("click", openChecklistSettings);
+$("#closeChecklistDialog").addEventListener("click", () => $("#checklistDialog").close());
+$("#checklistDialog").addEventListener("click", event => { if (event.target === $("#checklistDialog")) $("#checklistDialog").close(); });
+$("#addCriterionButton").addEventListener("click", () => criterionRow());
+$("#checklistForm").addEventListener("submit", saveChecklist);
+$("#checklistName").addEventListener("input", event => { if (!state.categoryEdited) $("#checklistCategory").value = identifier(event.target.value); });
+$("#checklistCategory").addEventListener("input", event => { state.categoryEdited = Boolean(event.target.value); event.target.value = identifier(event.target.value); });
 
 (async function init() {
-  try { state.reviews = await api("/api/reviews"); renderHistory(); }
+  try { state.reviews = await api("/api/reviews"); renderHistory(); await loadChecklists(); }
   catch { renderHistory(); }
 })();

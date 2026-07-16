@@ -17,100 +17,6 @@ def _canonical_url(value: str) -> str:
     return urlunparse((parsed.scheme, parsed.netloc, parsed.path or "/", "", parsed.query, ""))
 
 
-def _public_location_directory_urls(value: str) -> list[str]:
-    """Bounded same-site routes commonly used when a price requires a location."""
-    parsed = urlparse(value)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        return []
-    origin = f"{parsed.scheme}://{parsed.netloc}"
-    hostname = (parsed.hostname or "").lower().removeprefix("www.")
-    candidates = []
-    
-    if hostname == "planetfitness.com":
-        # Planet Fitness protects its finder but allows its public club pages.
-        # Herald Square is the official club page for the configured 10001
-        # default and therefore represents the same bounded location choice.
-        candidates = [
-            f"{origin}/gyms?lat=40.7128&long=-74.0060&limit=60",
-            f"{origin}/gyms/manhattan-herald-square-ny",
-            f"{origin}/clubs/ny/new-york",
-            f"{origin}/locations/new-york-ny",
-            f"{origin}/locations/new-york",
-        ]
-        
-    return candidates
-
-
-def _provider_content_recovery_urls(value: str, application: ApplicationData) -> list[str]:
-    """Known canonical public pages for obsolete provider links in application forms."""
-    parsed = urlparse(value)
-    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        return []
-    hostname = (parsed.hostname or "").lower().removeprefix("www.")
-    provider = (application.provider_name or "").lower()
-    requested = (application.requested_item or "").lower()
-
-    # Sample 5 contains the retired /join path. The current official page is
-    # linked from that site's 404 footer, but seeding it directly prevents a
-    # stale link and crawl-page limit from hiding the Individual $80 level.
-    if (
-        hostname == "brooklynmuseum.org"
-        and "brooklyn museum" in provider
-        and "membership" in requested
-    ):
-        origin = f"{parsed.scheme}://{parsed.netloc}"
-        return [f"{origin}/support/membership"]
-    return []
-
-
-def _protected_provider_recovery_pages(
-    value: str,
-    application: ApplicationData,
-    criteria: list[Criterion],
-) -> list[CrawledPage]:
-    """Public facts for providers whose finder blocks automation but whose club pages are indexed."""
-    parsed = urlparse(value)
-    hostname = (parsed.hostname or "").lower().removeprefix("www.")
-    provider = (application.provider_name or "").lower()
-    requested = (application.requested_item or "").lower()
-    if hostname != "planetfitness.com" or "planet fitness" not in provider:
-        return []
-    if application.requested_price is None or "membership" not in requested:
-        return []
-
-    url = f"{parsed.scheme}://{parsed.netloc}/gyms/manhattan-herald-square-ny"
-    markdown = "\n".join(
-        [
-            "# Manhattan (Herald Square), NY",
-            "215 W 35th St, New York, NY 10001",
-            "MEMBERSHIPS",
-            "PF BLACK CARD",
-            "$37.99 /mo",
-            "Classic",
-            "$19 /mo",
-            "plus taxes & fees",
-            "Only $19 a month!",
-            "Unlimited access to your home club.",
-            "$59 Startup Fee",
-            "$59 Annual Fee",
-            "Classic No Commitment",
-            "$24 /mo",
-            "plus taxes & fees",
-            "We strive to create a workout environment where everyone feels accepted and respected.",
-            "Whether you're a first-time gym user or a fitness veteran, you'll always have a home in our Judgement Free Zone.",
-            "The PE@PF program is available to all members, of all fitness levels.",
-        ]
-    )
-    page = CrawledPage(
-        url=url,
-        title="Manhattan (Herald Square), NY | Planet Fitness",
-        markdown=markdown,
-        text=normalize_space(markdown),
-    )
-    _relevance(page, application, criteria)
-    return [page]
-
-
 def _same_domain(left: str, right: str) -> bool:
     a = (urlparse(left).hostname or "").lower().removeprefix("www.")
     b = (urlparse(right).hostname or "").lower().removeprefix("www.")
@@ -140,6 +46,31 @@ def _relevance(page: CrawledPage, application: ApplicationData, criteria: list[C
     matches = sum(1 for token in tokens if token in haystack)
     page.score = matches / max(1, math.sqrt(len(tokens)))
     return page.score
+
+
+def _link_relevance(hint: str, application: ApplicationData, criteria: list[Criterion]) -> int:
+    """Rank same-site links from the live application and checklist, not provider rules."""
+    generic_terms = {
+        "price", "pricing", "fee", "cost", "tuition", "rate", "plan", "offer",
+        "schedule", "class", "program", "membership", "join", "product", "register",
+        "details", "services", "support",
+    }
+    contextual_terms: set[str] = set()
+    for value in (application.requested_item, application.subject_area, application.category):
+        contextual_terms.update(
+            token for token in re.findall(r"[a-z0-9]+", (value or "").lower()) if len(token) >= 4
+        )
+    for criterion in criteria:
+        contextual_terms.update(
+            token
+            for term in criterion.evidence_terms
+            for token in re.findall(r"[a-z0-9]+", term.lower())
+            if len(token) >= 4
+        )
+    lowered = hint.lower()
+    return sum(1 for term in generic_terms if term in lowered) + sum(
+        3 for term in contextual_terms if term in lowered
+    )
 
 
 def _needs_interactive_recovery(pages: list[CrawledPage], criteria: list[Criterion]) -> bool:
@@ -184,8 +115,7 @@ async def crawl_site(
     )
     pages: list[CrawledPage] = []
     warnings: list[str] = []
-    seeds = [_canonical_url(url), *_provider_content_recovery_urls(url, application)]
-    queue: deque[tuple[str, int]] = deque((candidate, 0) for candidate in dict.fromkeys(seeds))
+    queue: deque[tuple[str, int]] = deque([(_canonical_url(url), 0)])
     seen: set[str] = set()
     try:
         async with AsyncWebCrawler(config=browser_config) as crawler:
@@ -215,10 +145,6 @@ async def crawl_site(
                         warnings.append(
                             f"Could not crawl {current}: {getattr(result, 'error_message', 'unknown error')}"
                         )
-                        if depth == 0 and application.requested_price is not None:
-                            for candidate in _public_location_directory_urls(url):
-                                if candidate not in seen:
-                                    queue.append((candidate, 0))
                         continue
                     markdown = _markdown_text(getattr(result, "markdown", ""))
                     text = normalize_space(markdown)
@@ -230,18 +156,7 @@ async def crawl_site(
                     )
                     _relevance(page, application, criteria)
                     pages.append(page)
-                    if (
-                        depth == 0
-                        and application.requested_price is not None
-                        and not re.search(r"\$\s*[0-9]", text)
-                    ):
-                        for candidate in _public_location_directory_urls(url):
-                            if candidate not in seen:
-                                queue.append((candidate, 0))
-                    recovery_urls = set(_public_location_directory_urls(url))
-                    if depth >= settings.crawl_max_depth or (
-                        current in recovery_urls and re.search(r"\$\s*[0-9]", text)
-                    ):
+                    if depth >= settings.crawl_max_depth:
                         continue
                     links = getattr(result, "links", {}) or {}
                     internal = links.get("internal", []) if isinstance(links, dict) else []
@@ -255,23 +170,7 @@ async def crawl_site(
                         if not _same_domain(url, candidate) or candidate in seen:
                             continue
                         hint = f"{candidate} {label}".lower()
-                        score = sum(
-                            1
-                            for term in (
-                                "price",
-                                "pricing",
-                                "fee",
-                                "tuition",
-                                "schedule",
-                                "class",
-                                "program",
-                                "membership",
-                                "join",
-                                "product",
-                                "register",
-                            )
-                            if term in hint
-                        )
+                        score = _link_relevance(hint, application, criteria)
                         ranked.append((score, candidate))
                     for _, candidate in sorted(ranked, reverse=True)[: settings.crawl_max_pages * 2]:
                         queue.append((candidate, depth + 1))
@@ -287,39 +186,9 @@ async def crawl_site(
             for page in useful_fallback_pages:
                 by_url[_canonical_url(page.url)] = page
             pages = list(by_url.values())[: settings.crawl_max_pages]
-            if _public_location_directory_urls(url):
-                warnings.append(
-                    "Recovered: Playwright filled public lookup details using New York, United States and refreshed rendered text."
-                )
-            else:
-                warnings.append("Recovered: Playwright refreshed the rendered public website text.")
+            warnings.append("Recovered: Playwright refreshed the rendered public website text.")
         elif fallback_warning:
             warnings.append(fallback_warning)
-    if not pages or _needs_interactive_recovery(pages, criteria):
-        protected_pages = _protected_provider_recovery_pages(url, application, criteria)
-        if protected_pages:
-            by_url = {_canonical_url(page.url): page for page in pages if not is_blocked_page(page.text)}
-            for page in protected_pages:
-                by_url[_canonical_url(page.url)] = page
-            pages = list(by_url.values())[: settings.crawl_max_pages]
-            warnings.append(
-                "Recovered: The protected provider finder was replaced with a bounded official New York club page."
-            )
-    recovery_urls = set(_public_location_directory_urls(url))
-    recovered_location_price = any(
-        page.url in recovery_urls and re.search(r"\$\s*[0-9]", page.text or page.markdown)
-        for page in pages
-    )
-    if recovered_location_price:
-        warnings = [
-            warning
-            for warning in warnings
-            if "blocked by anti-bot protection" not in warning.lower()
-            and "access-verification page" not in warning.lower()
-        ]
-        warnings.append(
-            "Recovered: The protected location finder was replaced with an official New York club page."
-        )
     pages.sort(key=lambda page: page.score, reverse=True)
     return pages, warnings
 
@@ -334,10 +203,7 @@ async def _playwright_fallback(
     except Exception as exc:
         return [], f"Playwright fallback is unavailable: {exc}"
     pages: list[CrawledPage] = []
-    seeds = [_canonical_url(start_url), *_provider_content_recovery_urls(start_url, application)]
-    if application.requested_price is not None:
-        seeds.extend(_public_location_directory_urls(start_url))
-    queue: deque[tuple[str, int]] = deque((candidate, 0) for candidate in dict.fromkeys(seeds))
+    queue: deque[tuple[str, int]] = deque([(_canonical_url(start_url), 0)])
     seen: set[str] = set()
     try:
         async with async_playwright() as runtime:
@@ -379,25 +245,7 @@ async def _playwright_fallback(
                             if not candidate.startswith(("http://", "https://")) or not _same_domain(start_url, candidate) or candidate in seen:
                                 continue
                             hint = f"{candidate} {link.get('text', '')}".lower()
-                            score = sum(
-                                1
-                                for term in (
-                                    "price",
-                                    "pricing",
-                                    "fee",
-                                    "plan",
-                                    "offer",
-                                    "schedule",
-                                    "class",
-                                    "program",
-                                    "membership",
-                                    "join",
-                                    "register",
-                                    "club details",
-                                    "new york",
-                                )
-                                if term in hint
-                            )
+                            score = _link_relevance(hint, application, criteria)
                             ranked.append((score, candidate))
                         for _, candidate in sorted(ranked, reverse=True)[: settings.crawl_max_pages * 2]:
                             queue.append((candidate, depth + 1))

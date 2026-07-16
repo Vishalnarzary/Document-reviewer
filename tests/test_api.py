@@ -46,3 +46,43 @@ def test_pdf_upload_streams_real_progress_events(monkeypatch):
     assert [event["progress"] for event in events if event["type"] == "progress"] == [5, 55, 100]
     assert events[-1]["type"] == "complete"
     assert events[-1]["review_id"] == "progress-test-review"
+
+
+def test_checklists_can_be_listed_added_and_removed(tmp_path, monkeypatch):
+    import app.checklists as checklist_module
+
+    seed = """category: existing\ndisplay_name: Existing\naliases: [existing]\ncriteria:\n  - id: published\n    label: Information is published\n    scope: public_web\n"""
+    (tmp_path / "existing.yaml").write_text(seed, encoding="utf-8")
+    with monkeypatch.context() as scoped:
+        scoped.setattr(checklist_module, "CHECKLIST_DIR", tmp_path)
+        checklist_module.load_checklists.cache_clear()
+
+        listed = client.get("/api/checklists")
+        assert listed.status_code == 200
+        assert [item["category"] for item in listed.json()] == ["existing"]
+
+        created = client.post(
+            "/api/checklists",
+            json={
+                "category": "Art Supplies",
+                "display_name": "Art Supplies",
+                "aliases": ["creative materials"],
+                "criteria": [
+                    {
+                        "label": "The item and price are published",
+                        "scope": "public_web",
+                        "evidence_terms": ["price", "materials"],
+                        "rule": "price_match",
+                    },
+                    {"label": "Budget approval is recorded", "scope": "internal"},
+                ],
+            },
+        )
+        assert created.status_code == 201
+        assert created.json()["category"] == "art_supplies"
+        assert (tmp_path / "art_supplies.yaml").exists()
+
+        removed = client.delete("/api/checklists/art_supplies")
+        assert removed.status_code == 204
+        assert not (tmp_path / "art_supplies.yaml").exists()
+    checklist_module.load_checklists.cache_clear()

@@ -25,9 +25,7 @@ from app.models import (
     VisionCapture,
 )
 from app.research import heuristic_evaluate
-from app.research import _provider_content_recovery_urls
-from app.research import _public_location_directory_urls
-from app.research import _protected_provider_recovery_pages
+from app.research import _link_relevance, _same_domain
 from app.utils import format_exception, safe_public_url
 from app.vision import materialize_vision_evidence, select_vision_fallback_criteria
 from app.workflow import (
@@ -71,52 +69,25 @@ def test_access_verification_is_not_treated_as_recovered_public_content():
     assert is_blocked_page("Choose a location to see membership pricing") is False
 
 
-def test_location_directory_recovery_stays_on_provider_origin():
-    urls = _public_location_directory_urls("https://www.example.org/gyms?campaign=1")
-    assert urls == []
-    assert _public_location_directory_urls("file:///tmp/page.html") == []
-
-    planet_fitness = _public_location_directory_urls("https://www.planetfitness.com/gyms")
-    assert "https://www.planetfitness.com/gyms/manhattan-herald-square-ny" in planet_fitness
-    assert all(url.startswith("https://www.planetfitness.com/") for url in planet_fitness)
+def test_research_navigation_is_same_site_without_guessed_provider_routes():
+    assert _same_domain("https://example.org/start", "https://www.example.org/pricing")
+    assert _same_domain("https://example.org/start", "https://members.example.org/plans")
+    assert not _same_domain("https://example.org/start", "https://unrelated.example/pricing")
 
 
-def test_brooklyn_museum_uses_membership_page_without_location_paths():
-    application = ApplicationData(
-        provider_name="Brooklyn Museum",
-        requested_item="Individual Membership",
-        requested_price=80,
-    )
-    assert _provider_content_recovery_urls(
-        "https://www.brooklynmuseum.org/join", application
-    ) == ["https://www.brooklynmuseum.org/support/membership"]
-    assert _public_location_directory_urls("https://www.brooklynmuseum.org/join") == []
-
-    unrelated = ApplicationData(
-        provider_name="Example Museum",
-        requested_item="Individual Membership",
-        requested_price=80,
-    )
-    assert _provider_content_recovery_urls(
-        "https://www.example.org/join", unrelated
-    ) == []
-
-
-def test_planet_fitness_protected_recovery_uses_default_new_york_club():
-    criteria = load_checklists()["membership"]["criteria"]
-    pages = _protected_provider_recovery_pages(
-        "https://www.planetfitness.com/gyms",
-        ApplicationData(
-            provider_name="Planet Fitness",
-            requested_item="Classic Gym Membership",
-            requested_price=15,
-        ),
-        criteria,
-    )
-    assert pages
-    assert pages[0].url == "https://www.planetfitness.com/gyms/manhattan-herald-square-ny"
-    assert "Classic" in pages[0].markdown
-    assert "$19 /mo" in pages[0].markdown
+def test_link_ranking_uses_current_request_and_checklist_terms():
+    application = ApplicationData(requested_item="Individual pottery studio membership", category="custom")
+    criteria = [
+        Criterion(
+            id="published_cost",
+            label="Cost is published",
+            scope="public_web",
+            evidence_terms=["annual price", "studio access"],
+        )
+    ]
+    relevant = _link_relevance("/support/studio-membership Individual studio plans", application, criteria)
+    unrelated = _link_relevance("/about Board and staff", application, criteria)
+    assert relevant > unrelated
 
 
 def test_recovered_text_evidence_satisfies_audit_gate(tmp_path, monkeypatch):

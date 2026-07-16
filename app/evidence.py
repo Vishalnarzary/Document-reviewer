@@ -139,11 +139,11 @@ def materialize_recovered_text_evidence(
     findings: list[Finding],
     pages: list[CrawledPage],
 ) -> list[EvidenceRecord]:
-    """Create transparent audit evidence for vetted protected-provider text recovery."""
+    """Create transparent evidence cards when verified crawl text cannot be screenshotted."""
     page_by_url = {
         page.url: page
         for page in pages
-        if "planetfitness.com/gyms/manhattan-herald-square-ny" in page.url.lower()
+        if (page.text or page.markdown) and not is_blocked_page(page.text or page.markdown)
     }
     if not page_by_url:
         return []
@@ -174,17 +174,18 @@ def materialize_recovered_text_evidence(
         context = haystack[context_start:context_end]
         full_id = full_record_by_url.get(page.url)
         if not full_id:
-            raw_full = review_dir / "evidence" / "raw" / "protected-provider-text.png"
-            stamped_full = review_dir / "evidence" / "full" / "protected-provider-text-stamped.png"
+            page_slug = _slug(page.url)
+            raw_full = review_dir / "evidence" / "raw" / f"{page_slug}-crawl-text.png"
+            stamped_full = review_dir / "evidence" / "full" / f"{page_slug}-crawl-text-stamped.png"
             _draw_text_card(
                 raw_full,
-                page.title or "Protected provider recovery",
+                page.title or "Verified website text",
                 page.url,
-                "The live browser was challenged, so this record preserves the recovered public text used for analysis.",
+                "This record preserves the exact crawled public text used for analysis when targeted browser capture was unavailable.",
                 haystack,
             )
-            stamp_image(raw_full, stamped_full, page.url, "Protected-provider text recovery", review_id, captured_at)
-            full_id = "EV-REC-FULL-01"
+            stamp_image(raw_full, stamped_full, page.url, "Verified crawl-text recovery", review_id, captured_at)
+            full_id = f"EV-REC-FULL-{len(full_record_by_url) + 1:02d}"
             records.append(
                 EvidenceRecord(
                     id=full_id,

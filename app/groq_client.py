@@ -202,15 +202,27 @@ class GroqAdapter:
         return None
 
     async def extract_application(self, text: str, baseline: ApplicationData) -> ApplicationData | None:
+        from .checklists import load_checklists
+
         schema = ApplicationData.model_json_schema()
+        categories = [
+            {
+                "id": category,
+                "name": checklist.get("display_name", category),
+                "aliases": checklist.get("aliases", []),
+            }
+            for category, checklist in load_checklists().items()
+        ]
         system = (
             "You extract fields from government pre-approval application text. "
             "Use only the supplied document. Preserve uncertainty with null values; never invent data. "
-            "Category must be one of community_class, coaching, membership, hri, otps, "
-            "transition_program, or appeal."
+            "Choose category from the CURRENT CHECKLIST CATEGORIES supplied by the application. "
+            "Return the category id exactly."
         )
         user = (
-            "Baseline extraction:\n"
+            "CURRENT CHECKLIST CATEGORIES:\n"
+            + json.dumps(categories, indent=2)
+            + "\n\nBaseline extraction:\n"
             + baseline.model_dump_json(indent=2)
             + "\n\nApplication text:\n"
             + text[:24000]
