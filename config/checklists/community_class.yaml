@@ -1,0 +1,60 @@
+category: community_class
+display_name: Community Class
+aliases: [community class, community classes]
+criteria:
+  - id: open_to_public
+    label: Open to the broader public
+    scope: public_web
+    description: The class is available to the general public and not restricted to OPWDD or disabled participants.
+    evidence_terms: [open to the public, all adults, everyone, public, register, enrollment]
+  - id: published_fees
+    label: Published fees are visible
+    scope: public_web
+    description: A public fee or price is displayed for the requested class.
+    evidence_terms: [price, pricing, fee, tuition, cost, per session, per class, $]
+  - id: identical_fees
+    label: No separate OPWDD pricing
+    scope: public_web
+    description: The public page does not present a separate OPWDD or disability-only fee.
+    evidence_terms: [price, pricing, fee, tuition, cost]
+  - id: subject_based
+    label: Class is subject-based
+    scope: public_web
+    description: The class teaches a recognizable subject such as art, dance, martial arts, cooking, or riding.
+    evidence_terms: [class, lesson, learn, skills, training, riding, martial arts, dance, cooking, art]
+  - id: noncredit
+    label: Class does not award college credit
+    scope: public_web
+    description: The public description does not identify the class as credit-bearing.
+    evidence_terms: [noncredit, non-credit, continuing education, recreational]
+    absence_status: Needs Review
+  - id: nonclinical
+    label: Class is not clinical or therapy
+    scope: public_web
+    description: The public description presents a class rather than a clinical treatment or therapy.
+    evidence_terms: [class, recreational, lesson, group, program]
+    absence_status: Needs Review
+  - id: published_schedule
+    label: Published schedule exists
+    scope: public_web
+    description: Dates, days, times, or a current schedule are publicly visible.
+    evidence_terms: [schedule, calendar, dates, monday, tuesday, wednesday, thursday, friday, saturday, sunday, am, pm]
+  - id: fee_match
+    label: Published fee matches the application
+    scope: public_web
+    description: The fee shown online is consistent with the fee stated on the application.
+    evidence_terms: [price, pricing, fee, tuition, cost, per session, per class, $]
+    rule: price_match
+  - id: budget_approval
+    label: Category is approved in the participant budget
+    scope: internal
+  - id: life_plan_alignment
+    label: Request aligns with the Life Plan
+    scope: internal
+  - id: duplication_check
+    label: Request does not duplicate another funded service
+    scope: internal
+  - id: invoice_frequency
+    label: Session frequency is within invoice guidance
+    scope: internal
+

@@ -1,0 +1,36 @@
+category: otps
+display_name: Other Than Personal Services
+aliases: [other than personal services, otps]
+criteria:
+  - id: item_exists
+    label: Requested item or service exists
+    scope: public_web
+    evidence_terms: [product, item, add to cart, buy now, price, $]
+  - id: visible_price
+    label: Public price is visible
+    scope: public_web
+    evidence_terms: [price, list price, current price, deal price, $]
+  - id: exclusion_check
+    label: Item is not on the OTPS exclusion list
+    scope: public_web
+    description: Excludes co-pays, institutional expenses, illegal items, cable TV, ordinary household supplies, experimental treatment, repairs, community-class fees, rental cars, vehicle costs, legal fees, and excess housing costs.
+    evidence_terms: [product, item, service]
+    rule: otps_exclusion
+  - id: budget_cap
+    label: Price is within the $3,000 budget-year cap
+    scope: public_web
+    evidence_terms: [price, $]
+    rule: max_3000
+  - id: budget_approval
+    label: OTPS line is approved in the budget
+    scope: internal
+  - id: life_plan_alignment
+    label: Item is supported by the Life Plan
+    scope: internal
+  - id: alternate_funding
+    label: Item cannot be funded elsewhere
+    scope: internal
+  - id: prior_purchase
+    label: Same item was not purchased this budget year
+    scope: internal
+

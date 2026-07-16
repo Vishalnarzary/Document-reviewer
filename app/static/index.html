@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Evidence-gathering assistant for pre-approval reviewers.">
+    <title>Evidence Desk - Pre-Approval Review</title>
+    <link rel="stylesheet" href="/static/styles.css?v=speed-v2">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Review history">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">E</span>
+          <div><strong>Evidence Desk</strong><span>Pre-approval review</span></div>
+        </div>
+        <button class="new-review" id="newReviewButton"><span aria-hidden="true">＋</span> New review</button>
+        <div class="side-label">Recent reviews</div>
+        <nav id="reviewHistory" class="history-list"><p class="muted small">No reviews yet.</p></nav>
+        <div class="sidebar-footer">
+          <span class="privacy-dot" aria-hidden="true"></span>
+          <div><strong>Local workspace</strong><span>Keep real participant data private.</span></div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <div class="eyebrow" id="reviewEyebrow">NEW REVIEW</div>
+            <h1 id="reviewTitle">Website evidence review</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="human-badge"><span aria-hidden="true">●</span> Human decision required</span>
+            <button class="quiet-button" id="downloadButton" hidden>Download package</button>
+          </div>
+        </header>
+
+        <section class="conversation" id="conversation" aria-live="polite">
+          <div class="welcome" id="welcomeView">
+            <div class="welcome-kicker">PUBLIC WEBSITE VERIFICATION</div>
+            <h2>Turn an application into<br><em>audit-ready evidence.</em></h2>
+            <p>Upload a completed pre-approval PDF. The assistant will read it, research the public provider website, capture dated evidence, and prepare a report for your review.</p>
+            <label class="upload-card" id="uploadCard" for="fileInput">
+              <input id="fileInput" type="file" accept="application/pdf,.pdf">
+              <span class="upload-icon" aria-hidden="true">↑</span>
+              <span><strong>Drop an application PDF here</strong><small>or click to choose a file - maximum 20 MB</small></span>
+              <span class="browse-chip">Choose PDF</span>
+            </label>
+            <div class="workflow-line" aria-label="Review workflow">
+              <span><b>01</b> Read form</span><i></i><span><b>02</b> Research website</span><i></i><span><b>03</b> Capture proof</span><i></i><span><b>04</b> Prepare report</span>
+            </div>
+            <div class="principles">
+              <div><strong>Evidence first</strong><span>Found means a real page and screenshot support the finding.</span></div>
+              <div><strong>Uncertainty stays visible</strong><span>Blocked or unclear evidence is marked Needs Review.</span></div>
+              <div><strong>You make the decision</strong><span>The assistant never approves or denies a request.</span></div>
+            </div>
+          </div>
+          <div class="message-list" id="messageList" hidden></div>
+        </section>
+
+        <form class="composer" id="composer" hidden>
+          <div class="suggestions" id="suggestions">
+            <button type="button" data-prompt="Summarize the results">Summarize results</button>
+            <button type="button" data-prompt="Explain the price comparison">Explain price</button>
+            <button type="button" data-prompt="Regenerate the report">Regenerate report</button>
+          </div>
+          <div class="composer-row">
+            <textarea id="messageInput" rows="1" placeholder="Ask about the review, add a note, or request a change..." aria-label="Message"></textarea>
+            <button type="submit" class="send-button" aria-label="Send message">↑</button>
+          </div>
+          <div class="composer-note">Evidence support only - final approval or denial remains with authorized staff.</div>
+        </form>
+      </main>
+
+      <aside class="inspector" id="inspector" aria-label="Review details">
+        <div class="inspector-empty" id="inspectorEmpty">
+          <span aria-hidden="true">⌁</span>
+          <strong>Review details</strong>
+          <p>Extracted fields and evidence findings will appear here.</p>
+        </div>
+        <div id="inspectorContent" hidden>
+          <div class="inspector-heading"><div><div class="eyebrow">APPLICATION</div><h2>Request details</h2></div><span class="phase-pill" id="phasePill">Ready</span></div>
+          <div class="detail-grid" id="requestDetails"></div>
+          <div class="section-heading"><div><div class="eyebrow">CHECKLIST</div><h2>Evidence findings</h2></div><span id="findingCount"></span></div>
+          <div class="finding-list" id="findingList"></div>
+          <div class="report-links" id="reportLinks"></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script src="/static/app.js?v=speed-v2" defer></script>
+  </body>
+</html>

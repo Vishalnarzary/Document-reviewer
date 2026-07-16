@@ -1,0 +1,250 @@
+{
+  "review_id": "1e6d9e11f3864bedb9d9dc5d2c71356d",
+  "created_at": "2026-07-15T11:26:03.059782+00:00",
+  "updated_at": "2026-07-15T11:44:36.924928+00:00",
+  "human_decision_required": true,
+  "application": {
+    "participant_name": "Aaron M.",
+    "participant_age": 26,
+    "fi_coordinator": "Leah Stern",
+    "broker_name": "Michael Ross",
+    "category": "community_class",
+    "requested_item": "Recreational Group Riding",
+    "provider_name": "GallopNYC",
+    "website_url": "https://gallopnyc.org/recreational-riding",
+    "requested_price_text": "$80 per 30-minute session",
+    "requested_price": 80.0,
+    "billing_period": null,
+    "duration": null,
+    "subject_area": "Recreational Horseback Riding $80 per 30-minute session 30 minutes",
+    "safety_features": null,
+    "denial_reason": null,
+    "appeal_justification": null,
+    "valued_outcome": null,
+    "life_plan_date": null,
+    "source_pages": 2,
+    "extraction_warnings": []
+  },
+  "application_sha256": "461a32947d98bea17614190093a2a4054f9cb9b6f54b261418dc81fb5d922128",
+  "findings": [
+    {
+      "criterion_id": "open_to_public",
+      "label": "Open to the broader public",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "quote": "However, we offer a limited number of riding lessons to the public.",
+      "evidence_ids": [
+        "EV-FULL-01",
+        "EV-002"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "published_fees",
+      "label": "Published fees are visible",
+      "status": "Found",
+      "note": "A public price of $80.00 is visible on the page.",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
+      "evidence_ids": [
+        "EV-FULL-01",
+        "EV-003"
+      ],
+      "source": "system",
+      "confidence": 0.9
+    },
+    {
+      "criterion_id": "identical_fees",
+      "label": "No separate OPWDD pricing",
+      "status": "Needs Review",
+      "note": "The website does not provide enough explicit language to prove this negative condition safely.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "subject_based",
+      "label": "Class is subject-based",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "quote": "Learn about enrolling →",
+      "evidence_ids": [
+        "EV-FULL-01",
+        "EV-004"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "noncredit",
+      "label": "Class does not award college credit",
+      "status": "Needs Review",
+      "note": "The page does not explicitly state whether college credit is awarded.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "nonclinical",
+      "label": "Class is not clinical or therapy",
+      "status": "Needs Review",
+      "note": "The website does not provide enough explicit language to prove this negative condition safely.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "published_schedule",
+      "label": "Published schedule exists",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "quote": "We're a structured, semester-based horsemanship program, not a drop-in stable.",
+      "evidence_ids": [
+        "EV-FULL-01",
+        "EV-005"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "fee_match",
+      "label": "Published fee matches the application",
+      "status": "Found",
+      "note": "The website displays $80.00, matching the application amount.",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
+      "evidence_ids": [
+        "EV-FULL-01",
+        "EV-006"
+      ],
+      "source": "system",
+      "confidence": 0.9
+    },
+    {
+      "criterion_id": "budget_approval",
+      "label": "Category is approved in the participant budget",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "life_plan_alignment",
+      "label": "Request aligns with the Life Plan",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "duplication_check",
+      "label": "Request does not duplicate another funded service",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "invoice_frequency",
+      "label": "Session frequency is within invoice guidance",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-FULL-01",
+      "criterion_id": null,
+      "kind": "full_page",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "captured_at": "2026-07-15T11:44:24.838048+00:00",
+      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/page-01-full.png",
+      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/full/page-01-full-stamped.png",
+      "quote": null,
+      "sha256": "eb71e8fd4b03dce6c6e64cf08f664dd7eba9410d666e3e145568f0aa091eadf4"
+    },
+    {
+      "id": "EV-002",
+      "criterion_id": "open_to_public",
+      "kind": "targeted",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "captured_at": "2026-07-15T11:44:24.838048+00:00",
+      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/open-to-public.png",
+      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/open-to-public-stamped.png",
+      "quote": "However, we offer a limited number of riding lessons to the public.",
+      "sha256": "6f4cb48be3d217ba340ca07d282c59eba89861a23cb5190c868d0d070cb3a235"
+    },
+    {
+      "id": "EV-003",
+      "criterion_id": "published_fees",
+      "kind": "targeted",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "captured_at": "2026-07-15T11:44:24.838048+00:00",
+      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/published-fees.png",
+      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/published-fees-stamped.png",
+      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
+      "sha256": "a8f361e4ba4398fb6a4117b931baf7397a1ed7d5b49dd8a43e4b55409650fd00"
+    },
+    {
+      "id": "EV-004",
+      "criterion_id": "subject_based",
+      "kind": "targeted",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "captured_at": "2026-07-15T11:44:24.838048+00:00",
+      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/subject-based.png",
+      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/subject-based-stamped.png",
+      "quote": "Learn about enrolling →",
+      "sha256": "6e7db4e37bfeb25613a9d3f51bca2ed0ee98df508aee8ab7ef7f64dc944c5a68"
+    },
+    {
+      "id": "EV-005",
+      "criterion_id": "published_schedule",
+      "kind": "targeted",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "captured_at": "2026-07-15T11:44:24.838048+00:00",
+      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/published-schedule.png",
+      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/published-schedule-stamped.png",
+      "quote": "We're a structured, semester-based horsemanship program, not a drop-in stable.",
+      "sha256": "434fbd8c9e4d87ff89e85054118422c76be0d38383e7b0f9e3feb827c34748cd"
+    },
+    {
+      "id": "EV-006",
+      "criterion_id": "fee_match",
+      "kind": "targeted",
+      "url": "https://gallopnyc.org/recreational-riding",
+      "captured_at": "2026-07-15T11:44:24.838048+00:00",
+      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/fee-match.png",
+      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/fee-match-stamped.png",
+      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
+      "sha256": "1f1c2bae379051ca660a55f50840c8560ed605067b914e911ea4fcf22941605c"
+    }
+  ],
+  "reports": {
+    "html": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/report.html",
+    "pdf": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/report.pdf"
+  }
+}

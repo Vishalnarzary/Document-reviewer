@@ -1,0 +1,39 @@
+category: appeal
+display_name: Pre-Approval Appeal
+aliases: [pre-approval appeals, appeal, appeals]
+criteria:
+  - id: denial_issue
+    label: Website evidence addresses the stated denial reason
+    scope: public_web
+    evidence_terms: [price, pricing, fee, schedule, class, public, $]
+    rule: appeal_context
+  - id: open_to_public
+    label: Class is open to the broader public
+    scope: public_web
+    evidence_terms: [open to the public, all adults, everyone, public, register, enrollment]
+  - id: published_fees
+    label: Published fees are visible
+    scope: public_web
+    evidence_terms: [price, pricing, fee, tuition, cost, per session, per class, $]
+  - id: fee_match
+    label: Published fee matches the appeal
+    scope: public_web
+    evidence_terms: [price, pricing, fee, tuition, cost, per session, per class, $]
+    rule: price_match
+  - id: subject_based
+    label: Class is subject-based
+    scope: public_web
+    evidence_terms: [class, lesson, learn, skills, training, martial arts, dance, cooking, art]
+  - id: published_schedule
+    label: Published schedule exists
+    scope: public_web
+    evidence_terms: [schedule, calendar, dates, monday, tuesday, wednesday, thursday, friday, saturday, sunday, am, pm]
+  - id: attached_rate_sheet
+    label: Referenced rate sheet is available
+    scope: document
+    description: The appeal mentions an attachment; a separate document is needed to verify it.
+  - id: final_determination
+    label: Appeal determination
+    scope: internal
+    description: Final determinations remain with the appeal committee.
+

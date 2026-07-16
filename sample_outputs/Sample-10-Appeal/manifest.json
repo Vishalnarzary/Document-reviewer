@@ -1,0 +1,203 @@
+{
+  "review_id": "ac33a60e84a045e0890bffa1e5f2cbb5",
+  "created_at": "2026-07-15T11:41:48.725012+00:00",
+  "updated_at": "2026-07-15T11:42:36.103820+00:00",
+  "human_decision_required": true,
+  "application": {
+    "participant_name": "Yosef B.",
+    "participant_age": 22,
+    "fi_coordinator": "Leah Stern",
+    "broker_name": "Sarah Klein",
+    "category": "appeal",
+    "requested_item": "Adult Group Jiu Jitsu",
+    "provider_name": "Gracie Barra",
+    "website_url": "https://graciebarra.com",
+    "requested_price_text": "$30 per session",
+    "requested_price": 30.0,
+    "billing_period": "per session",
+    "duration": null,
+    "subject_area": null,
+    "safety_features": null,
+    "denial_reason": "Published fees could not be verified on the provider’s website.",
+    "appeal_justification": null,
+    "valued_outcome": null,
+    "life_plan_date": null,
+    "source_pages": 1,
+    "extraction_warnings": []
+  },
+  "application_sha256": "341cfe393a56f304c362b947638c4e05f56088cc232f9e5cc953d85f7092e72d",
+  "findings": [
+    {
+      "criterion_id": "denial_issue",
+      "label": "Website evidence addresses the stated denial reason",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "quote": "! https://graciebarra.com/wp-content/uploads/2025/07/logos-barra-shield.svg https://graciebarra.com Book a Class https://graciebarra.com/classes/jiu-jitsu-fundamentals/ modal-bookclass",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-003"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "open_to_public",
+      "label": "Class is open to the broader public",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "quote": "Everyone starts somewhere, and our team is here to support you.",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-004"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "published_fees",
+      "label": "Published fees are visible",
+      "status": "Needs Review",
+      "note": "No reliable dollar amount was identified on the public pages reviewed.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "fee_match",
+      "label": "Published fee matches the appeal",
+      "status": "Needs Review",
+      "note": "No reliable public price was identified on the pages reviewed.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "subject_based",
+      "label": "Class is subject-based",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "quote": "! https://graciebarra.com/wp-content/uploads/2025/07/logos-barra-shield.svg https://graciebarra.com Book a Class https://graciebarra.com/classes/jiu-jitsu-fundamentals/ modal-bookclass",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-005"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "published_schedule",
+      "label": "Published schedule exists",
+      "status": "Found",
+      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "quote": "! https://graciebarra.com/wp-content/uploads/2025/07/logos-barra-shield.svg https://graciebarra.com Book a Class https://graciebarra.com/classes/jiu-jitsu-fundamentals/ modal-bookclass",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-006"
+      ],
+      "source": "system",
+      "confidence": 0.7
+    },
+    {
+      "criterion_id": "attached_rate_sheet",
+      "label": "Referenced rate sheet is available",
+      "status": "Needs Review",
+      "note": "The appeal mentions an attachment; a separate document is needed to verify it.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    },
+    {
+      "criterion_id": "final_determination",
+      "label": "Appeal determination",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-FULL-01",
+      "criterion_id": null,
+      "kind": "full_page",
+      "url": "https://graciebarra.com/",
+      "captured_at": "2026-07-15T11:42:15.278935+00:00",
+      "raw_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/raw/page-01-full.png",
+      "stamped_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/full/page-01-full-stamped.png",
+      "quote": null,
+      "sha256": "2e5cc6595a5661f5d1f913b6579b65dd8da7a9a16751bfcb9fe8c1a4158edcb8"
+    },
+    {
+      "id": "EV-FULL-02",
+      "criterion_id": null,
+      "kind": "full_page",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "captured_at": "2026-07-15T11:42:15.278935+00:00",
+      "raw_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/raw/page-02-full.png",
+      "stamped_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/full/page-02-full-stamped.png",
+      "quote": null,
+      "sha256": "781e06b5e3dff6d979a412249e3c89b9215b050edd480afafc1b2c7b8134789e"
+    },
+    {
+      "id": "EV-003",
+      "criterion_id": "denial_issue",
+      "kind": "targeted",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "captured_at": "2026-07-15T11:42:15.278935+00:00",
+      "raw_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/raw/denial-issue.png",
+      "stamped_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/targeted/denial-issue-stamped.png",
+      "quote": "! https://graciebarra.com/wp-content/uploads/2025/07/logos-barra-shield.svg https://graciebarra.com Book a Class https://graciebarra.com/classes/jiu-jitsu-fundamentals/ modal-bookclass",
+      "sha256": "3f45f3986c1cb7b2aaca4767ba53d3d549bf87cea7761c218ed74594b7f4f29d"
+    },
+    {
+      "id": "EV-004",
+      "criterion_id": "open_to_public",
+      "kind": "targeted",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "captured_at": "2026-07-15T11:42:15.278935+00:00",
+      "raw_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/raw/open-to-public.png",
+      "stamped_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/targeted/open-to-public-stamped.png",
+      "quote": "Everyone starts somewhere, and our team is here to support you.",
+      "sha256": "741b422fd158d3f80be38cb7706ccbfc65b164df72957b66ceeb6c4ef4f1e434"
+    },
+    {
+      "id": "EV-005",
+      "criterion_id": "subject_based",
+      "kind": "targeted",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "captured_at": "2026-07-15T11:42:15.278935+00:00",
+      "raw_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/raw/subject-based.png",
+      "stamped_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/targeted/subject-based-stamped.png",
+      "quote": "! https://graciebarra.com/wp-content/uploads/2025/07/logos-barra-shield.svg https://graciebarra.com Book a Class https://graciebarra.com/classes/jiu-jitsu-fundamentals/ modal-bookclass",
+      "sha256": "84348788a98889e11efc6b9eee3d604b3c8d7c399343315c166f70b24d24b61a"
+    },
+    {
+      "id": "EV-006",
+      "criterion_id": "published_schedule",
+      "kind": "targeted",
+      "url": "https://graciebarra.com/classes/jiu-jitsu-fundamentals/",
+      "captured_at": "2026-07-15T11:42:15.278935+00:00",
+      "raw_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/raw/published-schedule.png",
+      "stamped_path": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/evidence/targeted/published-schedule-stamped.png",
+      "quote": "! https://graciebarra.com/wp-content/uploads/2025/07/logos-barra-shield.svg https://graciebarra.com Book a Class https://graciebarra.com/classes/jiu-jitsu-fundamentals/ modal-bookclass",
+      "sha256": "1b05bcef7ce5628c8ec5ccf80141af7ca1ac96ba41726c948818a42d665d2ffa"
+    }
+  ],
+  "reports": {
+    "html": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/report.html",
+    "pdf": "output/reviews/ac33a60e84a045e0890bffa1e5f2cbb5/report.pdf"
+  }
+}

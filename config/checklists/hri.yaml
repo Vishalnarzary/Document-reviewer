@@ -1,0 +1,44 @@
+category: hri
+display_name: Household Related Item
+aliases: [household related items, household-related items, hri]
+criteria:
+  - id: item_exists
+    label: Requested item exists at the linked page
+    scope: public_web
+    evidence_terms: [product, item, add to cart, buy now, in stock, price, $]
+  - id: visible_price
+    label: Product price is visible
+    scope: public_web
+    evidence_terms: [price, list price, current price, deal price, $]
+  - id: exclusion_check
+    label: Item is not on the HRI exclusion list
+    scope: public_web
+    description: Excludes academic tutoring, pill dispensers, phones, computer hardware/software, vehicles, medical equipment, monitoring systems, clinical services, and therapies.
+    evidence_terms: [product, item]
+    rule: hri_exclusion
+  - id: safety_features
+    label: Product page supports stated safety features
+    scope: public_web
+    evidence_terms: [safety, slip resistant, weight capacity, supports, ada, secure, grip]
+    rule: safety_features
+  - id: budget_cap
+    label: Price is within the $1,500 budget-year cap
+    scope: public_web
+    evidence_terms: [price, $]
+    rule: max_1500
+  - id: budget_approval
+    label: HRI is approved in the budget
+    scope: internal
+  - id: adult_only
+    label: Participant is over 18
+    scope: internal
+  - id: life_plan_alignment
+    label: Item is supported by the Life Plan
+    scope: internal
+  - id: alternate_funding
+    label: Item cannot be funded elsewhere
+    scope: internal
+  - id: prior_purchase
+    label: Same item was not purchased this budget year
+    scope: internal
+

@@ -1,0 +1,36 @@
+category: coaching
+display_name: Coaching
+aliases: [coaching, coaching for parents, coaching for spouse]
+criteria:
+  - id: published_fees
+    label: Published course fees are visible
+    scope: public_web
+    evidence_terms: [price, pricing, fee, tuition, course fee, class fee, $]
+  - id: fee_cap
+    label: Fee is within the coaching cap
+    scope: public_web
+    description: Group classes must be at most $55, private classes at most $111, and annual program spending is capped at $500.
+    evidence_terms: [price, fee, tuition, group, private, $]
+    rule: coaching_cap
+  - id: educational_content
+    label: Genuine educational or coaching content
+    scope: public_web
+    evidence_terms: [learn, education, course, workshop, parenting, coaching, skills]
+  - id: no_travel_lodging
+    label: Request is not travel or lodging
+    scope: public_web
+    evidence_terms: [course, class, workshop, registration]
+    absence_status: Needs Review
+  - id: adult_only
+    label: Participant is over 18
+    scope: internal
+  - id: budget_approval
+    label: Coaching is approved in the budget
+    scope: internal
+  - id: life_plan_alignment
+    label: Coaching aligns with the Life Plan
+    scope: internal
+  - id: alternate_funding
+    label: No other public funding source applies
+    scope: internal
+

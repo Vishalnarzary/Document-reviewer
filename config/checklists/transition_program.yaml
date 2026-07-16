@@ -1,0 +1,41 @@
+category: transition_program
+display_name: Transition Program
+aliases: [transition program, transition]
+criteria:
+  - id: published_fees
+    label: Program fees are published
+    scope: public_web
+    evidence_terms: [tuition, fees, price, course fee, cost, $]
+  - id: fee_cap
+    label: Fee is within the transition-program cap
+    scope: public_web
+    description: At most $350 per course or $800 per month.
+    evidence_terms: [tuition, fees, price, course fee, monthly, $]
+    rule: transition_cap
+  - id: noncredit
+    label: Program is noncredit-bearing
+    scope: public_web
+    evidence_terms: [noncredit, non-credit, continuing education, workforce development]
+  - id: employment_skills
+    label: Program supports skill-building or employment outcomes
+    scope: public_web
+    evidence_terms: [career, employment, workforce, job, vocational, skills, training]
+  - id: not_opwdd_location
+    label: Program is not at an OPWDD-certified location
+    scope: public_web
+    evidence_terms: [campus, college, continuing education]
+    absence_status: Needs Review
+  - id: staff_screening_letter
+    label: Staff background-screening letter is supplied
+    scope: document
+    description: This requires a separate provider letter and cannot be proven from the public website.
+  - id: budget_approval
+    label: Transition program is approved in the budget
+    scope: internal
+  - id: education_completed
+    label: Participant completed their educational program
+    scope: internal
+  - id: alternate_funding
+    label: ACCES-VR, IDEA, or other funding does not apply
+    scope: internal
+

@@ -1,0 +1,32 @@
+category: membership
+display_name: Membership
+aliases: [membership, memberships, health club, organizational membership]
+criteria:
+  - id: open_to_public
+    label: Organization is open to the public
+    scope: public_web
+    evidence_terms: [join, membership, become a member, sign up, public, everyone]
+  - id: published_fee
+    label: Membership fee is published
+    scope: public_web
+    evidence_terms: [membership, monthly, annual, yearly, per month, price, fee, $]
+  - id: fee_match
+    label: Published membership fee matches the application
+    scope: public_web
+    evidence_terms: [membership, monthly, annual, yearly, per month, price, fee, $]
+    rule: price_match
+  - id: not_private_club
+    label: Not private or invitation-only
+    scope: public_web
+    evidence_terms: [join, membership, sign up, buy membership]
+    absence_status: Needs Review
+  - id: budget_approval
+    label: Membership is approved in the budget
+    scope: internal
+  - id: community_inclusion
+    label: Membership supports community inclusion
+    scope: internal
+  - id: participant_only
+    label: Membership benefits only the participant
+    scope: internal
+
