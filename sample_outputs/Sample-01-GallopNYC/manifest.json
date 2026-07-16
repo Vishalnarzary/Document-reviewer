@@ -1,7 +1,7 @@
 {
-  "review_id": "1e6d9e11f3864bedb9d9dc5d2c71356d",
-  "created_at": "2026-07-15T11:26:03.059782+00:00",
-  "updated_at": "2026-07-15T11:44:36.924928+00:00",
+  "review_id": "0454843c36844b239886560a4c7d5b41",
+  "created_at": "2026-07-16T19:15:00.147956+00:00",
+  "updated_at": "2026-07-16T19:15:00.148965+00:00",
   "human_decision_required": true,
   "application": {
     "participant_name": "Aaron M.",
@@ -31,104 +31,109 @@
       "criterion_id": "open_to_public",
       "label": "Open to the broader public",
       "status": "Found",
-      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "note": "Evidence found",
       "url": "https://gallopnyc.org/recreational-riding",
-      "quote": "However, we offer a limited number of riding lessons to the public.",
+      "quote": "we offer a limited number of riding lessons to the public.",
       "evidence_ids": [
         "EV-FULL-01",
         "EV-002"
       ],
-      "source": "system",
-      "confidence": 0.7
+      "source": "groq-cache",
+      "confidence": 1.0,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "published_fees",
       "label": "Published fees are visible",
       "status": "Found",
-      "note": "A public price of $80.00 is visible on the page.",
+      "note": "Evidence found",
       "url": "https://gallopnyc.org/recreational-riding",
-      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
+      "quote": "30-Minute Group - $80",
       "evidence_ids": [
         "EV-FULL-01",
         "EV-003"
       ],
-      "source": "system",
-      "confidence": 0.9
+      "source": "groq-cache",
+      "confidence": 1.0,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "identical_fees",
       "label": "No separate OPWDD pricing",
       "status": "Needs Review",
-      "note": "The website does not provide enough explicit language to prove this negative condition safely.",
+      "note": "The cited public text does not explicitly prove this negative criterion, so it requires manual review.",
       "url": null,
       "quote": null,
       "evidence_ids": [],
-      "source": "system",
-      "confidence": null
+      "source": "groq-cache",
+      "confidence": 1.0,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "subject_based",
       "label": "Class is subject-based",
       "status": "Found",
-      "note": "Relevant public language was found and will be captured for the reviewer.",
+      "note": "Evidence found",
       "url": "https://gallopnyc.org/recreational-riding",
-      "quote": "Learn about enrolling →",
+      "quote": "structured, semester-based horsemanship program",
       "evidence_ids": [
         "EV-FULL-01",
         "EV-004"
       ],
-      "source": "system",
-      "confidence": 0.7
+      "source": "groq-cache",
+      "confidence": 1.0,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "noncredit",
       "label": "Class does not award college credit",
       "status": "Needs Review",
-      "note": "The page does not explicitly state whether college credit is awarded.",
+      "note": "Insufficient evidence",
       "url": null,
       "quote": null,
       "evidence_ids": [],
-      "source": "system",
-      "confidence": null
+      "source": "groq-cache",
+      "confidence": null,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "nonclinical",
       "label": "Class is not clinical or therapy",
       "status": "Needs Review",
-      "note": "The website does not provide enough explicit language to prove this negative condition safely.",
+      "note": "The cited public text does not explicitly prove this negative criterion, so it requires manual review.",
       "url": null,
       "quote": null,
       "evidence_ids": [],
-      "source": "system",
-      "confidence": null
+      "source": "groq-cache",
+      "confidence": 1.0,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "published_schedule",
       "label": "Published schedule exists",
-      "status": "Found",
-      "note": "Relevant public language was found and will be captured for the reviewer.",
-      "url": "https://gallopnyc.org/recreational-riding",
-      "quote": "We're a structured, semester-based horsemanship program, not a drop-in stable.",
-      "evidence_ids": [
-        "EV-FULL-01",
-        "EV-005"
-      ],
-      "source": "system",
-      "confidence": 0.7
+      "status": "Needs Review",
+      "note": "Insufficient evidence",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "groq-cache",
+      "confidence": null,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "fee_match",
       "label": "Published fee matches the application",
       "status": "Found",
-      "note": "The website displays $80.00, matching the application amount.",
+      "note": "Evidence found",
       "url": "https://gallopnyc.org/recreational-riding",
-      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
+      "quote": "30-Minute Group - $80",
       "evidence_ids": [
         "EV-FULL-01",
-        "EV-006"
+        "EV-005"
       ],
-      "source": "system",
-      "confidence": 0.9
+      "source": "groq-cache",
+      "confidence": 1.0,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "budget_approval",
@@ -139,7 +144,8 @@
       "quote": null,
       "evidence_ids": [],
       "source": "system",
-      "confidence": null
+      "confidence": null,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "life_plan_alignment",
@@ -150,7 +156,8 @@
       "quote": null,
       "evidence_ids": [],
       "source": "system",
-      "confidence": null
+      "confidence": null,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "duplication_check",
@@ -161,7 +168,8 @@
       "quote": null,
       "evidence_ids": [],
       "source": "system",
-      "confidence": null
+      "confidence": null,
+      "visual_capture_id": null
     },
     {
       "criterion_id": "invoice_frequency",
@@ -172,7 +180,8 @@
       "quote": null,
       "evidence_ids": [],
       "source": "system",
-      "confidence": null
+      "confidence": null,
+      "visual_capture_id": null
     }
   ],
   "evidence": [
@@ -181,70 +190,59 @@
       "criterion_id": null,
       "kind": "full_page",
       "url": "https://gallopnyc.org/recreational-riding",
-      "captured_at": "2026-07-15T11:44:24.838048+00:00",
-      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/page-01-full.png",
-      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/full/page-01-full-stamped.png",
+      "captured_at": "2026-07-16T19:15:24.513370+00:00",
+      "raw_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/raw/page-01-full.png",
+      "stamped_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/full/page-01-full-stamped.png",
       "quote": null,
-      "sha256": "eb71e8fd4b03dce6c6e64cf08f664dd7eba9410d666e3e145568f0aa091eadf4"
+      "sha256": "34455d901e843b1697f288f5bd2f217d8e4400c11ae11162e715b0cb1f64fb42"
     },
     {
       "id": "EV-002",
       "criterion_id": "open_to_public",
       "kind": "targeted",
       "url": "https://gallopnyc.org/recreational-riding",
-      "captured_at": "2026-07-15T11:44:24.838048+00:00",
-      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/open-to-public.png",
-      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/open-to-public-stamped.png",
-      "quote": "However, we offer a limited number of riding lessons to the public.",
-      "sha256": "6f4cb48be3d217ba340ca07d282c59eba89861a23cb5190c868d0d070cb3a235"
+      "captured_at": "2026-07-16T19:15:24.513370+00:00",
+      "raw_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/raw/open-to-public.png",
+      "stamped_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/targeted/open-to-public-stamped.png",
+      "quote": "we offer a limited number of riding lessons to the public.",
+      "sha256": "4fe89f22f9d4a6393271abc8bf1d4479f206d76a43812485af5463ff4f078315"
     },
     {
       "id": "EV-003",
       "criterion_id": "published_fees",
       "kind": "targeted",
       "url": "https://gallopnyc.org/recreational-riding",
-      "captured_at": "2026-07-15T11:44:24.838048+00:00",
-      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/published-fees.png",
-      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/published-fees-stamped.png",
-      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
-      "sha256": "a8f361e4ba4398fb6a4117b931baf7397a1ed7d5b49dd8a43e4b55409650fd00"
+      "captured_at": "2026-07-16T19:15:24.513370+00:00",
+      "raw_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/raw/published-fees.png",
+      "stamped_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/targeted/published-fees-stamped.png",
+      "quote": "30-Minute Group - $80",
+      "sha256": "970f8fbde8ab345658526aab56db519b96677c8ab8592f269a4a4b7bb5c906c5"
     },
     {
       "id": "EV-004",
       "criterion_id": "subject_based",
       "kind": "targeted",
       "url": "https://gallopnyc.org/recreational-riding",
-      "captured_at": "2026-07-15T11:44:24.838048+00:00",
-      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/subject-based.png",
-      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/subject-based-stamped.png",
-      "quote": "Learn about enrolling →",
-      "sha256": "6e7db4e37bfeb25613a9d3f51bca2ed0ee98df508aee8ab7ef7f64dc944c5a68"
+      "captured_at": "2026-07-16T19:15:24.513370+00:00",
+      "raw_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/raw/subject-based.png",
+      "stamped_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/targeted/subject-based-stamped.png",
+      "quote": "structured, semester-based horsemanship program",
+      "sha256": "822cc1e5ebd529a4a25e50a6eb06aef74d79215af1d4af4cfd7b152102f07aa0"
     },
     {
       "id": "EV-005",
-      "criterion_id": "published_schedule",
-      "kind": "targeted",
-      "url": "https://gallopnyc.org/recreational-riding",
-      "captured_at": "2026-07-15T11:44:24.838048+00:00",
-      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/published-schedule.png",
-      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/published-schedule-stamped.png",
-      "quote": "We're a structured, semester-based horsemanship program, not a drop-in stable.",
-      "sha256": "434fbd8c9e4d87ff89e85054118422c76be0d38383e7b0f9e3feb827c34748cd"
-    },
-    {
-      "id": "EV-006",
       "criterion_id": "fee_match",
       "kind": "targeted",
       "url": "https://gallopnyc.org/recreational-riding",
-      "captured_at": "2026-07-15T11:44:24.838048+00:00",
-      "raw_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/raw/fee-match.png",
-      "stamped_path": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/evidence/targeted/fee-match-stamped.png",
-      "quote": "itional information, please email us at info@gallopnyc.org. Sign Up Group Classes 30-Minute Group - $80 45-Minute Group - $100 60-Minute Group - $125 Back to Programs Sign Up for Our Newsletter! GallopNYC is a 501(c)(3) nonprofit organization",
-      "sha256": "1f1c2bae379051ca660a55f50840c8560ed605067b914e911ea4fcf22941605c"
+      "captured_at": "2026-07-16T19:15:24.513370+00:00",
+      "raw_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/raw/fee-match.png",
+      "stamped_path": "output/reviews/0454843c36844b239886560a4c7d5b41/evidence/targeted/fee-match-stamped.png",
+      "quote": "30-Minute Group - $80",
+      "sha256": "b84f9ad21a3e26f2e8be717c773890f89e3f6fa5cd1dde32d5094c0cf31639e3"
     }
   ],
   "reports": {
-    "html": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/report.html",
-    "pdf": "output/reviews/1e6d9e11f3864bedb9d9dc5d2c71356d/report.pdf"
+    "html": "output/reviews/0454843c36844b239886560a4c7d5b41/report.html",
+    "pdf": "output/reviews/0454843c36844b239886560a4c7d5b41/report.pdf"
   }
 }

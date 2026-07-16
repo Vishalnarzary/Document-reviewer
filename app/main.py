@@ -10,7 +10,13 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from .checklists import checklist_definitions, remove_checklist, save_checklist, supported_categories
+from .checklists import (
+    checklist_definitions,
+    remove_checklist,
+    save_checklist,
+    supported_categories,
+    update_checklist,
+)
 from .config import OUTPUT_DIR, STATIC_DIR
 from .models import ChatRequest, ChecklistInput
 from .storage import store
@@ -61,6 +67,16 @@ async def create_checklist(payload: ChecklistInput) -> dict:
         return save_checklist(payload)
     except FileExistsError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.put("/api/checklists/{category}")
+async def edit_checklist(category: str, payload: ChecklistInput) -> dict:
+    try:
+        return update_checklist(category, payload)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

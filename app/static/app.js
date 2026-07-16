@@ -1,4 +1,4 @@
-const state = { current: null, reviews: [], checklists: [], busy: false, categoryEdited: false };
+const state = { current: null, reviews: [], checklists: [], busy: false, categoryEdited: false, editingChecklist: null };
 const $ = (selector) => document.querySelector(selector);
 const fileInput = $("#fileInput");
 const uploadCard = $("#uploadCard");
@@ -228,15 +228,25 @@ function identifier(value = "") {
 function criterionRow(values = {}) {
   const row = document.createElement("div");
   row.className = "criterion-row";
+  row.dataset.criterionId = values.id || "";
   row.innerHTML = `<div class="criterion-row-head"><strong>Checklist item</strong><button type="button" class="remove-criterion" aria-label="Remove this checklist item">Remove</button></div>
     <label><span>Item to verify</span><input class="criterion-label" required maxlength="160" value="${escapeHtml(values.label || "")}" placeholder="Example: Price is published"></label>
+    <label class="criterion-description"><span>Reviewer guidance</span><textarea maxlength="1000" placeholder="Describe what counts as evidence for this item.">${escapeHtml(values.description || "")}</textarea></label>
     <div class="criterion-options">
-      <label><span>Review source</span><select class="criterion-scope"><option value="public_web">Public website</option><option value="internal">Internal review</option></select></label>
+      <label><span>Review source</span><select class="criterion-scope"><option value="public_web">Public website</option><option value="document">Application or attachment</option><option value="internal">Internal review</option></select></label>
       <label><span>Special comparison</span><select class="criterion-rule"><option value="">None</option><option value="price_match">Match website price to application</option></select></label>
     </div>
+    <label class="criterion-absence"><span>If evidence is absent</span><select><option value="Needs Review">Needs Review</option><option value="Not Found">Not Found</option></select><small>Use Needs Review when the website may be incomplete or ambiguous.</small></label>
     <label class="evidence-terms"><span>Evidence words</span><input value="${escapeHtml((values.evidence_terms || []).join(", "))}" placeholder="price, fee, annual"><small>Optional comma-separated words that help find relevant page sections.</small></label>`;
   row.querySelector(".criterion-scope").value = values.scope || "public_web";
+  if (values.rule && ![...row.querySelector(".criterion-rule").options].some(option => option.value === values.rule)) {
+    const option = document.createElement("option");
+    option.value = values.rule;
+    option.textContent = `Keep existing rule (${values.rule})`;
+    row.querySelector(".criterion-rule").appendChild(option);
+  }
   row.querySelector(".criterion-rule").value = values.rule || "";
+  row.querySelector(".criterion-absence select").value = values.absence_status || "Needs Review";
   row.querySelector(".remove-criterion").addEventListener("click", () => {
     if ($("#criterionEditor").children.length <= 1) return showToast("A checklist needs at least one item.");
     row.remove();
@@ -252,11 +262,15 @@ function renderChecklistLibrary() {
     return;
   }
   library.innerHTML = state.checklists.map(checklist => `<article class="checklist-card">
-    <div class="checklist-card-head"><div><strong>${escapeHtml(checklist.display_name)}</strong><span>${escapeHtml(checklist.category)}</span></div><button type="button" data-remove-checklist="${escapeHtml(checklist.category)}">Remove</button></div>
+    <div class="checklist-card-head"><div><strong>${escapeHtml(checklist.display_name)}</strong><span>${escapeHtml(checklist.category)}</span></div><div class="checklist-card-actions"><button type="button" data-edit-checklist="${escapeHtml(checklist.category)}">Edit</button><button type="button" data-remove-checklist="${escapeHtml(checklist.category)}">Remove</button></div></div>
     <details><summary>${checklist.criteria.length} checklist item${checklist.criteria.length === 1 ? "" : "s"}</summary>
-      <ul>${checklist.criteria.map(item => `<li><span>${escapeHtml(item.label)}</span><small>${item.scope === "internal" ? "Internal review" : "Public website"}${item.rule === "price_match" ? " - price comparison" : ""}</small></li>`).join("")}</ul>
+      <ul>${checklist.criteria.map(item => `<li><span>${escapeHtml(item.label)}</span><small>${item.scope === "internal" ? "Internal review" : item.scope === "document" ? "Application or attachment" : "Public website"}${item.rule ? ` - ${item.rule === "price_match" ? "price comparison" : escapeHtml(item.rule.replaceAll("_", " "))}` : ""}</small></li>`).join("")}</ul>
     </details>
   </article>`).join("");
+  library.querySelectorAll("[data-edit-checklist]").forEach(button => button.addEventListener("click", () => {
+    const checklist = state.checklists.find(item => item.category === button.dataset.editChecklist);
+    if (checklist) beginChecklistEdit(checklist);
+  }));
   library.querySelectorAll("[data-remove-checklist]").forEach(button => button.addEventListener("click", async () => {
     const category = button.dataset.removeChecklist;
     const checklist = state.checklists.find(item => item.category === category);
@@ -279,7 +293,29 @@ function resetChecklistForm() {
   $("#checklistForm").reset();
   $("#criterionEditor").innerHTML = "";
   state.categoryEdited = false;
+  state.editingChecklist = null;
+  $("#checklistCategory").disabled = false;
+  $("#checklistFormTitle").textContent = "Add a checklist";
+  $("#saveChecklistButton").textContent = "Save checklist";
+  $("#cancelChecklistEdit").hidden = true;
   criterionRow();
+}
+
+function beginChecklistEdit(checklist) {
+  state.editingChecklist = checklist.category;
+  state.categoryEdited = true;
+  $("#checklistForm").reset();
+  $("#criterionEditor").innerHTML = "";
+  $("#checklistName").value = checklist.display_name;
+  $("#checklistCategory").value = checklist.category;
+  $("#checklistCategory").disabled = true;
+  $("#checklistAliases").value = (checklist.aliases || []).join(", ");
+  (checklist.criteria || []).forEach(item => criterionRow(item));
+  if (!checklist.criteria?.length) criterionRow();
+  $("#checklistFormTitle").textContent = `Edit ${checklist.display_name}`;
+  $("#saveChecklistButton").textContent = "Save changes";
+  $("#cancelChecklistEdit").hidden = false;
+  $(".checklist-builder").scrollTo({top: 0, behavior: "smooth"});
 }
 
 async function openChecklistSettings() {
@@ -295,11 +331,12 @@ async function saveChecklist(event) {
   const criteria = [...document.querySelectorAll(".criterion-row")].map((row, index) => {
     const label = row.querySelector(".criterion-label").value.trim();
     return {
-      id: identifier(label) || `criterion_${index + 1}`,
+      id: row.dataset.criterionId || identifier(label) || `criterion_${index + 1}`,
       label,
       scope: row.querySelector(".criterion-scope").value,
+      description: row.querySelector(".criterion-description textarea").value.trim(),
       evidence_terms: row.querySelector(".evidence-terms input").value.split(",").map(value => value.trim()).filter(Boolean),
-      absence_status: "Needs Review",
+      absence_status: row.querySelector(".criterion-absence select").value,
       rule: row.querySelector(".criterion-rule").value || null
     };
   });
@@ -309,16 +346,18 @@ async function saveChecklist(event) {
     aliases: $("#checklistAliases").value.split(",").map(value => value.trim()).filter(Boolean),
     criteria
   };
-  const submit = event.submitter;
+  const submit = $("#saveChecklistButton");
+  const editingCategory = state.editingChecklist;
   submit.disabled = true;
   submit.textContent = "Saving...";
   try {
-    await api("/api/checklists", {method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+    const endpoint = editingCategory ? `/api/checklists/${encodeURIComponent(editingCategory)}` : "/api/checklists";
+    await api(endpoint, {method: editingCategory ? "PUT" : "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)});
     await loadChecklists();
     resetChecklistForm();
-    showToast("Checklist added and ready for new reviews.");
+    showToast(editingCategory ? "Checklist changes saved." : "Checklist added and ready for new reviews.");
   } catch (error) { showToast(error.message); }
-  finally { submit.disabled = false; submit.textContent = "Save checklist"; }
+  finally { submit.disabled = false; submit.textContent = state.editingChecklist ? "Save changes" : "Save checklist"; }
 }
 
 fileInput.addEventListener("change", event => upload(event.target.files[0]));
@@ -335,6 +374,7 @@ $("#checklistSettingsButton").addEventListener("click", openChecklistSettings);
 $("#closeChecklistDialog").addEventListener("click", () => $("#checklistDialog").close());
 $("#checklistDialog").addEventListener("click", event => { if (event.target === $("#checklistDialog")) $("#checklistDialog").close(); });
 $("#addCriterionButton").addEventListener("click", () => criterionRow());
+$("#cancelChecklistEdit").addEventListener("click", resetChecklistForm);
 $("#checklistForm").addEventListener("submit", saveChecklist);
 $("#checklistName").addEventListener("input", event => { if (!state.categoryEdited) $("#checklistCategory").value = identifier(event.target.value); });
 $("#checklistCategory").addEventListener("input", event => { state.categoryEdited = Boolean(event.target.value); event.target.value = identifier(event.target.value); });

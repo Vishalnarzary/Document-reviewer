@@ -58,11 +58,11 @@ class Criterion(BaseModel):
 class ChecklistCriterionInput(BaseModel):
     id: str | None = None
     label: str = Field(min_length=2, max_length=160)
-    scope: Literal["public_web", "internal"] = "public_web"
+    scope: Literal["public_web", "document", "internal"] = "public_web"
     description: str = Field(default="", max_length=1000)
     evidence_terms: list[str] = Field(default_factory=list, max_length=30)
     absence_status: FindingStatus = FindingStatus.NEEDS_REVIEW
-    rule: Literal["price_match"] | None = None
+    rule: str | None = Field(default=None, max_length=60)
 
 
 class ChecklistInput(BaseModel):

@@ -58,12 +58,7 @@ def _identifier(value: str, fallback: str) -> str:
     return (clean[:60] or fallback).strip("_")
 
 
-def save_checklist(payload: ChecklistInput) -> dict:
-    category = _identifier(payload.category, "checklist")
-    existing = load_checklists()
-    if category in existing:
-        raise FileExistsError(f'A checklist named "{category}" already exists.')
-
+def _checklist_data(payload: ChecklistInput, category: str) -> dict:
     criteria: list[dict] = []
     used_ids: set[str] = set()
     for index, item in enumerate(payload.criteria, 1):
@@ -89,12 +84,16 @@ def save_checklist(payload: ChecklistInput) -> dict:
             if value.strip()
         )
     )
-    data = {
+    return {
         "category": category,
         "display_name": payload.display_name.strip(),
         "aliases": aliases,
         "criteria": criteria,
     }
+
+
+def _write_checklist(data: dict, category: str) -> dict:
+    CHECKLIST_DIR.mkdir(parents=True, exist_ok=True)
     target = CHECKLIST_DIR / f"{category}.yaml"
     temporary = target.with_suffix(".yaml.tmp")
     temporary.write_text(
@@ -104,6 +103,23 @@ def save_checklist(payload: ChecklistInput) -> dict:
     temporary.replace(target)
     load_checklists.cache_clear()
     return next(item for item in checklist_definitions() if item["category"] == category)
+
+
+def save_checklist(payload: ChecklistInput) -> dict:
+    category = _identifier(payload.category, "checklist")
+    if category in load_checklists():
+        raise FileExistsError(f'A checklist named "{category}" already exists.')
+    return _write_checklist(_checklist_data(payload, category), category)
+
+
+def update_checklist(category: str, payload: ChecklistInput) -> dict:
+    normalized = _identifier(category, "")
+    if normalized not in load_checklists():
+        raise FileNotFoundError("Checklist not found.")
+    payload_category = _identifier(payload.category, "")
+    if payload_category != normalized:
+        raise ValueError("The category ID cannot be changed while editing a checklist.")
+    return _write_checklist(_checklist_data(payload, normalized), normalized)
 
 
 def remove_checklist(category: str) -> None:

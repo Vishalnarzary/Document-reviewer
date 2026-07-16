@@ -48,7 +48,7 @@ def test_pdf_upload_streams_real_progress_events(monkeypatch):
     assert events[-1]["review_id"] == "progress-test-review"
 
 
-def test_checklists_can_be_listed_added_and_removed(tmp_path, monkeypatch):
+def test_checklists_can_be_listed_added_edited_and_removed(tmp_path, monkeypatch):
     import app.checklists as checklist_module
 
     seed = """category: existing\ndisplay_name: Existing\naliases: [existing]\ncriteria:\n  - id: published\n    label: Information is published\n    scope: public_web\n"""
@@ -81,6 +81,45 @@ def test_checklists_can_be_listed_added_and_removed(tmp_path, monkeypatch):
         assert created.status_code == 201
         assert created.json()["category"] == "art_supplies"
         assert (tmp_path / "art_supplies.yaml").exists()
+
+        updated = client.put(
+            "/api/checklists/art_supplies",
+            json={
+                "category": "art_supplies",
+                "display_name": "Creative Supplies",
+                "aliases": ["art materials"],
+                "criteria": [
+                    {
+                        "id": "public_price",
+                        "label": "The requested supply price is published",
+                        "scope": "public_web",
+                        "description": "Use the price attached to the requested product.",
+                        "evidence_terms": ["price", "product"],
+                        "rule": "price_match",
+                    },
+                    {
+                        "id": "attachment_check",
+                        "label": "A supporting attachment is present",
+                        "scope": "document",
+                        "rule": "attachment_required",
+                    }
+                ],
+            },
+        )
+        assert updated.status_code == 200
+        assert updated.json()["display_name"] == "Creative Supplies"
+        assert [item["id"] for item in updated.json()["criteria"]] == ["public_price", "attachment_check"]
+        assert updated.json()["criteria"][1]["rule"] == "attachment_required"
+
+        renamed = client.put(
+            "/api/checklists/art_supplies",
+            json={
+                "category": "different_id",
+                "display_name": "Different",
+                "criteria": [{"label": "A valid item", "scope": "public_web"}],
+            },
+        )
+        assert renamed.status_code == 400
 
         removed = client.delete("/api/checklists/art_supplies")
         assert removed.status_code == 204

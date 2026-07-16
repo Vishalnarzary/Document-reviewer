@@ -1,0 +1,185 @@
+{
+  "review_id": "4a75e5d9b122430aa4c3679cb93337f1",
+  "created_at": "2026-07-16T19:25:48.639450+00:00",
+  "updated_at": "2026-07-16T19:44:59.872156+00:00",
+  "human_decision_required": true,
+  "application": {
+    "participant_name": "Miriam T.",
+    "participant_age": 35,
+    "fi_coordinator": "Leah Stern",
+    "broker_name": "Sarah Klein",
+    "category": "membership",
+    "requested_item": "Individual Membership",
+    "provider_name": "Brooklyn Museum",
+    "website_url": "https://www.brooklynmuseum.org/join",
+    "requested_price_text": "$80.00",
+    "requested_price": 80.0,
+    "billing_period": "yearly",
+    "duration": null,
+    "subject_area": null,
+    "safety_features": null,
+    "denial_reason": null,
+    "appeal_justification": null,
+    "valued_outcome": "Miriam will engage in community and cultural activities through an individual museum membership open to the public.",
+    "life_plan_date": "01/30/2026",
+    "source_pages": 1,
+    "extraction_warnings": []
+  },
+  "application_sha256": "fd3869bd6833022a964f8c811ffe9f6f319d9ce41aa8b8f9404d55103a4d86fc",
+  "findings": [
+    {
+      "criterion_id": "open_to_public",
+      "label": "Organization is open to the public",
+      "status": "Found",
+      "note": "Quote indicates public access",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "quote": "Everyone who comes to the Museum is a VIP.",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-003"
+      ],
+      "source": "groq",
+      "confidence": 1.0,
+      "visual_capture_id": null
+    },
+    {
+      "criterion_id": "published_fee",
+      "label": "Membership fee is published",
+      "status": "Found",
+      "note": "The recovered public page explicitly lists the requested offering at $80.00.",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "quote": "$80",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-004"
+      ],
+      "source": "groq-verified",
+      "confidence": 0.99,
+      "visual_capture_id": null
+    },
+    {
+      "criterion_id": "fee_match",
+      "label": "Published membership fee matches the application",
+      "status": "Found",
+      "note": "The explicit public fee of $80.00 matches the amount stated on the application.",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "quote": "$80",
+      "evidence_ids": [
+        "EV-FULL-02",
+        "EV-005"
+      ],
+      "source": "groq-verified",
+      "confidence": 0.99,
+      "visual_capture_id": null
+    },
+    {
+      "criterion_id": "not_private_club",
+      "label": "Not private or invitation-only",
+      "status": "Needs Review",
+      "note": "The cited public text does not explicitly prove this negative criterion, so it requires manual review.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "groq",
+      "confidence": 1.0,
+      "visual_capture_id": null
+    },
+    {
+      "criterion_id": "budget_approval",
+      "label": "Membership is approved in the budget",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null,
+      "visual_capture_id": null
+    },
+    {
+      "criterion_id": "community_inclusion",
+      "label": "Membership supports community inclusion",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null,
+      "visual_capture_id": null
+    },
+    {
+      "criterion_id": "participant_only",
+      "label": "Membership benefits only the participant",
+      "status": "Internal",
+      "note": "Internal information is required; this cannot be verified from a public website.",
+      "url": null,
+      "quote": null,
+      "evidence_ids": [],
+      "source": "system",
+      "confidence": null,
+      "visual_capture_id": null
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-FULL-01",
+      "criterion_id": null,
+      "kind": "full_page",
+      "url": "https://www.brooklynmuseum.org/join",
+      "captured_at": "2026-07-16T19:46:08.110108+00:00",
+      "raw_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/raw/page-01-full.png",
+      "stamped_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/full/page-01-full-stamped.png",
+      "quote": null,
+      "sha256": "75276238919c954a272c23421616f8f3cef57d75fb82c29ff4e00859651f07a7"
+    },
+    {
+      "id": "EV-FULL-02",
+      "criterion_id": null,
+      "kind": "full_page",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "captured_at": "2026-07-16T19:46:08.110108+00:00",
+      "raw_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/raw/page-02-full.png",
+      "stamped_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/full/page-02-full-stamped.png",
+      "quote": null,
+      "sha256": "913a1c332013cb07682d88ae011b63900501be94cff34d9981f767373948322a"
+    },
+    {
+      "id": "EV-003",
+      "criterion_id": "open_to_public",
+      "kind": "targeted",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "captured_at": "2026-07-16T19:46:08.110108+00:00",
+      "raw_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/raw/open-to-public.png",
+      "stamped_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/targeted/open-to-public-stamped.png",
+      "quote": "Everyone who comes to the Museum is a VIP.",
+      "sha256": "8f3ee9c05924928ef05b5efb367b8d75c0f54915610d9b2ee70a7532182512c4"
+    },
+    {
+      "id": "EV-004",
+      "criterion_id": "published_fee",
+      "kind": "targeted",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "captured_at": "2026-07-16T19:46:08.110108+00:00",
+      "raw_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/raw/published-fee.png",
+      "stamped_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/targeted/published-fee-stamped.png",
+      "quote": "$80",
+      "sha256": "4f83771c18b7e38a11018cad1c0b6ee8b716ee082b8f462d7a7e13ffb9351e6b"
+    },
+    {
+      "id": "EV-005",
+      "criterion_id": "fee_match",
+      "kind": "targeted",
+      "url": "https://www.brooklynmuseum.org/support/membership",
+      "captured_at": "2026-07-16T19:46:08.110108+00:00",
+      "raw_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/raw/fee-match.png",
+      "stamped_path": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/evidence/targeted/fee-match-stamped.png",
+      "quote": "$80",
+      "sha256": "fa25c5cfc1fa20c07ad46dc60750e8ff8371816e7d04e8b557d659eacedfca52"
+    }
+  ],
+  "reports": {
+    "html": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/report.html",
+    "pdf": "output/reviews/4a75e5d9b122430aa4c3679cb93337f1/report.pdf"
+  }
+}

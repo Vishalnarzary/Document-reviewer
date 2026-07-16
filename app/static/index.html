@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Evidence-gathering assistant for pre-approval reviewers.">
     <title>Evidence Desk - Pre-Approval Review</title>
-    <link rel="stylesheet" href="/static/styles.css?v=checklists-v1">
+    <link rel="stylesheet" href="/static/styles.css?v=checklists-v2">
   </head>
   <body>
     <div class="app-shell">
@@ -33,7 +33,7 @@
             <span class="human-badge"><span aria-hidden="true">●</span> Human decision required</span>
             <button class="quiet-button icon-button" id="checklistSettingsButton" type="button" aria-label="Manage checklists" title="Manage checklists">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
-              <span>Checklists</span>
+              <span>Manage checklists</span>
             </button>
             <button class="quiet-button" id="downloadButton" hidden>Download package</button>
           </div>
@@ -104,7 +104,7 @@
             <div id="checklistLibrary" class="checklist-library-list"></div>
           </section>
           <section class="checklist-builder">
-            <div class="dialog-section-title"><h3>Add a checklist</h3></div>
+            <div class="dialog-section-title"><h3 id="checklistFormTitle">Add a checklist</h3><button id="cancelChecklistEdit" class="text-button" type="button" hidden>Cancel edit</button></div>
             <form id="checklistForm">
               <div class="form-grid">
                 <label><span>Checklist name</span><input id="checklistName" required maxlength="100" placeholder="Example: Art supplies"></label>
@@ -113,7 +113,7 @@
               </div>
               <div class="criteria-heading"><div><strong>Checklist items</strong><small>Add public website checks or internal review reminders.</small></div><button id="addCriterionButton" class="quiet-button" type="button">+ Add item</button></div>
               <div id="criterionEditor" class="criterion-editor"></div>
-              <button class="save-checklist" type="submit">Save checklist</button>
+              <button class="save-checklist" id="saveChecklistButton" type="submit">Save checklist</button>
             </form>
           </section>
         </div>
@@ -121,6 +121,6 @@
     </dialog>
 
     <div class="toast" id="toast" role="status" hidden></div>
-    <script src="/static/app.js?v=checklists-v1" defer></script>
+    <script src="/static/app.js?v=checklists-v2" defer></script>
   </body>
 </html>

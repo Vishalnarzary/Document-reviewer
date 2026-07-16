@@ -194,7 +194,7 @@ Document-reviewer/
 │       ├── transition_program.yaml
 │       └── appeal.yaml
 │
-├── sample_outputs/             ← Committed report packages (3 samples)
+├── sample_outputs/             ← Committed report packages (samples 1 and 5)
 │   ├── Sample-01-GallopNYC/
 │   │   ├── report.html         ← Open in any browser
 │   │   ├── report.pdf
@@ -202,13 +202,12 @@ Document-reviewer/
 │   │   └── evidence/
 │   │       ├── full/           ← Full-page timestamped screenshots
 │   │       └── targeted/       ← Focused per-criterion screenshots
-│   ├── Sample-07-HRI-Laptop/
-│   └── Sample-10-Appeal/
+│   └── Sample-05-Brooklyn-Museum/
 │
 ├── samples/                    ← 10 test application PDFs (provided)
 ├── docs/                       ← Project brief PDFs (provided)
 ├── output/                     ← Runtime review output (gitignored)
-├── tests/                      ← 26 automated tests
+├── tests/                      ← 48 automated tests
 ├── requirements.txt
 ├── run.py                      ← Uvicorn launcher
 ├── start.ps1                   ← Windows startup script with preflight checks
@@ -221,13 +220,12 @@ Document-reviewer/
 
 ## Committed sample outputs
 
-Three complete report packages are committed under `sample_outputs/`:
+Two complete report packages are committed under `sample_outputs/`:
 
 | Folder | Sample | What it demonstrates |
 |---|---|---|
-| `Sample-01-GallopNYC/` | Community class — GallopNYC Recreational Riding | Evidence found: published fees, open to public, schedule visible |
-| `Sample-07-HRI-Laptop/` | HRI — Laptop computer (Amazon) | Exclusion test: laptop is on the HRI exclusion list; correctly flagged |
-| `Sample-10-Appeal/` | Appeal — Gracie Barra Jiu Jitsu | Appeal workflow: checks re-run against stated denial reason |
+| `Sample-01-GallopNYC/` | Community class — GallopNYC Recreational Riding | Evidence found: published fees, public access, subject match, and application price match |
+| `Sample-05-Brooklyn-Museum/` | Membership - Brooklyn Museum Individual Membership | Evidence found: the public Individual membership fee is `$80` and matches the application |
 
 Each folder contains:
 - `report.html` — human-readable findings report (open in any browser)
@@ -242,17 +240,26 @@ Each folder contains:
 
 ### From the reviewer interface
 
-1. Select the **Checklists** icon in the top-right toolbar.
+1. Select **Manage checklists** in the top-right toolbar.
 2. Review the existing checklist cards and expand one to see all its items.
-3. Select **Add item** for each public website check or internal review reminder.
-4. Choose **Match website price to application** only when that item compares prices.
-5. Select **Save checklist**. The new category is immediately available to PDF category
-   detection and Groq analysis; no restart is required.
+3. To change an existing checklist, select **Edit** on its card. You can rename it, update
+   aliases and reviewer guidance, change evidence settings, add checklist items, or remove
+   old items. The category ID remains fixed so existing form-category mappings stay stable.
+4. To create a new checklist, use the **Add a checklist** form and select **Add item** for
+   each public website check or internal review reminder.
+5. Choose **Match website price to application** only when an item compares prices. Choose
+   whether missing evidence should be reported as **Needs Review** or **Not Found**.
+6. Select **Save changes** when editing or **Save checklist** when creating. Updates are
+   immediately available to PDF category detection and Groq analysis; no restart is required.
 
-The same settings panel can remove a checklist after confirmation. Existing completed
-reports keep their saved findings, but future reviews cannot use a removed checklist.
+The same settings panel can remove individual checklist items while editing, or remove an
+entire checklist after confirmation. Existing completed reports keep their saved findings,
+but future reviews use the updated checklist definition.
 Checklist changes are stored as YAML files in `config/checklists/`, so deployments need a
 writable persistent volume if settings must survive a redeploy.
+Vercel's serverless filesystem is not persistent; for durable checklist edits on Vercel,
+connect this storage layer to a persistent database or object store. Repository checklists
+remain available as the read-only deployment defaults.
 
 ### Manual YAML option
 
@@ -307,7 +314,7 @@ seven sample categories.
 .\.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-46 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
+48 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
 normalization, two-stage price classification, checklist evaluation, HRI/OTPS exclusion
 detection, dual-track cross-validation, screenshot overlay correctness, report generation,
 evidence manifest integrity, dynamic checklist management, same-site navigation safeguards,
