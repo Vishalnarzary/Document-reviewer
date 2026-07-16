@@ -25,6 +25,7 @@ from app.models import (
     VisionCapture,
 )
 from app.research import heuristic_evaluate
+from app.research import _provider_content_recovery_urls
 from app.research import _public_location_directory_urls
 from app.research import _protected_provider_recovery_pages
 from app.utils import format_exception, safe_public_url
@@ -72,17 +73,33 @@ def test_access_verification_is_not_treated_as_recovered_public_content():
 
 def test_location_directory_recovery_stays_on_provider_origin():
     urls = _public_location_directory_urls("https://www.example.org/gyms?campaign=1")
-    assert urls == [
-        "https://www.example.org/gyms?lat=40.7128&long=-74.0060&limit=60",
-        "https://www.example.org/clubs/ny/new-york",
-        "https://www.example.org/locations/new-york-ny",
-        "https://www.example.org/locations/new-york",
-    ]
+    assert urls == []
     assert _public_location_directory_urls("file:///tmp/page.html") == []
 
     planet_fitness = _public_location_directory_urls("https://www.planetfitness.com/gyms")
     assert "https://www.planetfitness.com/gyms/manhattan-herald-square-ny" in planet_fitness
     assert all(url.startswith("https://www.planetfitness.com/") for url in planet_fitness)
+
+
+def test_brooklyn_museum_uses_membership_page_without_location_paths():
+    application = ApplicationData(
+        provider_name="Brooklyn Museum",
+        requested_item="Individual Membership",
+        requested_price=80,
+    )
+    assert _provider_content_recovery_urls(
+        "https://www.brooklynmuseum.org/join", application
+    ) == ["https://www.brooklynmuseum.org/support/membership"]
+    assert _public_location_directory_urls("https://www.brooklynmuseum.org/join") == []
+
+    unrelated = ApplicationData(
+        provider_name="Example Museum",
+        requested_item="Individual Membership",
+        requested_price=80,
+    )
+    assert _provider_content_recovery_urls(
+        "https://www.example.org/join", unrelated
+    ) == []
 
 
 def test_planet_fitness_protected_recovery_uses_default_new_york_club():
@@ -537,6 +554,52 @@ def test_gpt_oss_uses_strict_json_schema():
         "json_schema": {"name": "test", "strict": True, "schema": schema},
     }
     assert "tool_choice" not in completions.request
+
+
+def test_gpt_oss_recovers_valid_json_rejected_for_missing_optional_field():
+    from types import SimpleNamespace
+    import asyncio
+
+    class SchemaError(Exception):
+        status_code = 400
+
+        def __init__(self):
+            super().__init__("generated JSON omitted confidence")
+            self.body = str(
+                {
+                    "error": {
+                        "failed_generation": (
+                            '{"findings":[{"criterion_id":"published_fee",'
+                            '"label":"Membership fee is published","status":"Found",'
+                            '"note":"Individual is listed at $80.",'
+                            '"url":"https://www.brooklynmuseum.org/support/membership",'
+                            '"quote":"$80"}]}'
+                        )
+                    }
+                }
+            )
+
+    class FakeCompletions:
+        async def create(self, **kwargs):
+            raise SchemaError()
+
+    adapter = GroqAdapter.__new__(GroqAdapter)
+    adapter.enabled = True
+    adapter.model = "openai/gpt-oss-20b"
+    adapter.last_error = None
+    adapter._client = SimpleNamespace(
+        chat=SimpleNamespace(completions=FakeCompletions())
+    )
+    result = asyncio.run(
+        adapter._structured(
+            "system",
+            "user",
+            {"type": "object", "properties": {}, "required": []},
+            "test",
+        )
+    )
+    assert result["findings"][0]["quote"] == "$80"
+    assert adapter.last_error is None
 
 
 def test_rate_limit_retries_every_ten_seconds_up_to_six_times(monkeypatch):

@@ -51,6 +51,16 @@ and URL. The stamped screenshot is sent to Groq Vision
 (`meta-llama/llama-4-scout-17b-16e-instruct`) which reads all visible text including
 prices embedded in images, graphics, and pricing cards that text extraction cannot reach.
 
+**Recovery for stale links and protected pricing pages**
+The crawler follows relevant same-site links and can normalize known retired application
+URLs to the provider's current official content page. For example, Brooklyn Museum's old
+`/join` link is recovered to `/support/membership`, where the requested Individual level
+and its $80 annual price are published. Location defaults are applied only to recognized
+providers whose public price genuinely requires a club/location selection; New York paths
+are never generated for unrelated websites. If readable text is unavailable or a price is
+embedded in an image, the Groq Vision track analyses the captured page before the item is
+sent for manual review.
+
 **Cross-validation — 5-state confidence**
 
 | Status | Meaning |
@@ -280,10 +290,11 @@ needed if the app is already running — categories reload on each request.
 .\.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-26 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
+45 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
 normalization, two-stage price classification, checklist evaluation, HRI/OTPS exclusion
 detection, dual-track cross-validation, screenshot overlay correctness, report generation,
-evidence manifest integrity, rate-limit retry logic (6 × 10 s), and SSRF protection.
+evidence manifest integrity, protected-provider recovery, provider-specific location routing,
+rate-limit retry logic (6 × 10 s), and SSRF protection.
 
 ---
 
@@ -293,6 +304,7 @@ evidence manifest integrity, rate-limit retry logic (6 × 10 s), and SSRF protec
 |---|---|---|
 | `GROQ_API_KEY` | *(required)* | Your Groq API key from console.groq.com |
 | `GROQ_MODEL` | `openai/gpt-oss-20b` | Groq text model for analysis and chat |
+| `GROQ_VISION_MODEL` | `meta-llama/llama-4-scout-17b-16e-instruct` | Groq model for scanned forms, screenshots, and image-based prices |
 | `APP_HOST` | `127.0.0.1` | Bind address for the local server |
 | `APP_PORT` | `8000` | Port for the local server |
 | `CRAWL_MAX_PAGES` | `5` | Maximum provider pages to crawl per review |
@@ -374,7 +386,10 @@ Items the tool does **not** verify (always marked Internal in the report):
 
 **Provider website limitations:**
 - Sites that block automated browsers return `Needs Review`, not a false `Not Found`
-- Location-specific pricing (e.g. "prices vary by gym location") returns `Needs Review`
+- Recognized location-gated providers use a safe New York public lookup; unrelated domains
+  never receive guessed `/gyms`, `/clubs`, or `/locations/new-york` routes
+- Known retired form links can be mapped to a current official same-provider page; unknown
+  broken links remain `Needs Review`
 - Gated content, login walls, and CAPTCHAs are never bypassed
 - Amazon product pages may show regional or A/B-test pricing variants
 

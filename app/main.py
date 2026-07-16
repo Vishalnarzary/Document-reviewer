@@ -17,7 +17,7 @@ from .storage import store
 from .workflow import workflow
 
 
-ANALYSIS_PIPELINE_VERSION = "gpt-oss-scout-vision-v21"
+ANALYSIS_PIPELINE_VERSION = "gpt-oss-scout-vision-v24"
 
 
 app = FastAPI(

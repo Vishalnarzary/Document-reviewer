@@ -41,6 +41,28 @@ def _public_location_directory_urls(value: str) -> list[str]:
     return candidates
 
 
+def _provider_content_recovery_urls(value: str, application: ApplicationData) -> list[str]:
+    """Known canonical public pages for obsolete provider links in application forms."""
+    parsed = urlparse(value)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return []
+    hostname = (parsed.hostname or "").lower().removeprefix("www.")
+    provider = (application.provider_name or "").lower()
+    requested = (application.requested_item or "").lower()
+
+    # Sample 5 contains the retired /join path. The current official page is
+    # linked from that site's 404 footer, but seeding it directly prevents a
+    # stale link and crawl-page limit from hiding the Individual $80 level.
+    if (
+        hostname == "brooklynmuseum.org"
+        and "brooklyn museum" in provider
+        and "membership" in requested
+    ):
+        origin = f"{parsed.scheme}://{parsed.netloc}"
+        return [f"{origin}/support/membership"]
+    return []
+
+
 def _protected_provider_recovery_pages(
     value: str,
     application: ApplicationData,
@@ -162,7 +184,8 @@ async def crawl_site(
     )
     pages: list[CrawledPage] = []
     warnings: list[str] = []
-    queue: deque[tuple[str, int]] = deque([(_canonical_url(url), 0)])
+    seeds = [_canonical_url(url), *_provider_content_recovery_urls(url, application)]
+    queue: deque[tuple[str, int]] = deque((candidate, 0) for candidate in dict.fromkeys(seeds))
     seen: set[str] = set()
     try:
         async with AsyncWebCrawler(config=browser_config) as crawler:
@@ -264,9 +287,12 @@ async def crawl_site(
             for page in useful_fallback_pages:
                 by_url[_canonical_url(page.url)] = page
             pages = list(by_url.values())[: settings.crawl_max_pages]
-            warnings.append(
-                "Recovered: Playwright filled public lookup details using New York, United States and refreshed rendered text."
-            )
+            if _public_location_directory_urls(url):
+                warnings.append(
+                    "Recovered: Playwright filled public lookup details using New York, United States and refreshed rendered text."
+                )
+            else:
+                warnings.append("Recovered: Playwright refreshed the rendered public website text.")
         elif fallback_warning:
             warnings.append(fallback_warning)
     if not pages or _needs_interactive_recovery(pages, criteria):
@@ -308,7 +334,7 @@ async def _playwright_fallback(
     except Exception as exc:
         return [], f"Playwright fallback is unavailable: {exc}"
     pages: list[CrawledPage] = []
-    seeds = [_canonical_url(start_url)]
+    seeds = [_canonical_url(start_url), *_provider_content_recovery_urls(start_url, application)]
     if application.requested_price is not None:
         seeds.extend(_public_location_directory_urls(start_url))
     queue: deque[tuple[str, int]] = deque((candidate, 0) for candidate in dict.fromkeys(seeds))

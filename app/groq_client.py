@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import ast
 import base64
 import hashlib
 import json
@@ -21,6 +22,50 @@ if TYPE_CHECKING:
 ANALYSIS_CACHE_VERSION = "relevant-snippets-v10"
 RATE_LIMIT_RETRY_DELAY_SECONDS = 10
 RATE_LIMIT_MAX_RETRIES = 6
+
+
+def _recover_failed_generation(exc: Exception) -> dict | None:
+    """Recover valid JSON that Groq rejected only for a strict-schema mismatch."""
+    if getattr(exc, "status_code", None) != 400:
+        return None
+
+    def decode(value: object) -> dict | None:
+        if isinstance(value, dict):
+            generated = value.get("failed_generation")
+            if isinstance(generated, dict):
+                return generated
+            if isinstance(generated, str):
+                decoded = decode(generated)
+                if decoded is not None:
+                    return decoded
+            for nested in value.values():
+                decoded = decode(nested)
+                if decoded is not None:
+                    return decoded
+            return None
+        if not isinstance(value, str):
+            return None
+        for loader in (json.loads, ast.literal_eval):
+            try:
+                decoded = loader(value)
+            except (SyntaxError, TypeError, ValueError):
+                continue
+            if isinstance(decoded, dict):
+                # A decoded failed_generation is the desired payload. An API
+                # error wrapper is searched recursively for that payload.
+                if "findings" in decoded or "observations" in decoded:
+                    return decoded
+                nested = decode(decoded)
+                if nested is not None:
+                    return nested
+        return None
+
+    recovered = decode(getattr(exc, "body", None))
+    if recovered is not None:
+        return recovered
+    message = str(exc)
+    object_start = message.find("{")
+    return decode(message[object_start:]) if object_start >= 0 else None
 
 
 class GroqAdapter:
@@ -100,6 +145,14 @@ class GroqAdapter:
             except Exception as exc:
                 self.last_error = f"{type(exc).__name__}: {exc}"[:500]
                 status = getattr(exc, "status_code", None)
+                # gpt-oss occasionally emits otherwise valid JSON while omitting
+                # an optional/defaulted field such as confidence. Groq exposes
+                # that JSON as failed_generation. Downstream Pydantic and exact-
+                # quote checks still validate it before any conclusion is used.
+                recovered = _recover_failed_generation(exc)
+                if recovered is not None:
+                    self.last_error = None
+                    return recovered
                 # Request-size and exhausted rate-limit failures cannot be fixed
                 # by switching JSON response formats.
                 if status in {413, 429}:
@@ -367,8 +420,21 @@ class GroqAdapter:
         data = await self._structured(system, user, schema, "website_findings")
         if not data:
             return None
+        criterion_by_id = {criterion.id: criterion for criterion in criteria}
+        normalized_items: list[dict] = []
+        for raw_item in data.get("findings", []):
+            if not isinstance(raw_item, dict):
+                continue
+            item = dict(raw_item)
+            criterion = criterion_by_id.get(str(item.get("criterion_id") or ""))
+            if criterion is not None:
+                item.setdefault("label", criterion.label)
+            item.setdefault("url", None)
+            item.setdefault("quote", None)
+            item.setdefault("confidence", None)
+            normalized_items.append(item)
         try:
-            results = [Finding.model_validate(item) for item in data.get("findings", [])]
+            results = [Finding.model_validate(item) for item in normalized_items]
         except Exception:
             return None
         filtered: list[Finding] = []
