@@ -23,18 +23,21 @@ def _public_location_directory_urls(value: str) -> list[str]:
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         return []
     origin = f"{parsed.scheme}://{parsed.netloc}"
-    candidates = [
-        f"{origin}/gyms?lat=40.7128&long=-74.0060&limit=60",
-        f"{origin}/clubs/ny/new-york",
-        f"{origin}/locations/new-york-ny",
-        f"{origin}/locations/new-york",
-    ]
     hostname = (parsed.hostname or "").lower().removeprefix("www.")
+    candidates = []
+    
     if hostname == "planetfitness.com":
         # Planet Fitness protects its finder but allows its public club pages.
         # Herald Square is the official club page for the configured 10001
         # default and therefore represents the same bounded location choice.
-        candidates.insert(1, f"{origin}/gyms/manhattan-herald-square-ny")
+        candidates = [
+            f"{origin}/gyms?lat=40.7128&long=-74.0060&limit=60",
+            f"{origin}/gyms/manhattan-herald-square-ny",
+            f"{origin}/clubs/ny/new-york",
+            f"{origin}/locations/new-york-ny",
+            f"{origin}/locations/new-york",
+        ]
+        
     return candidates
 
 
