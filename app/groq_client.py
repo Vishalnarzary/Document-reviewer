@@ -554,10 +554,21 @@ class GroqAdapter:
     async def chat(self, state: "ReviewState", message: str) -> str | None:
         if not self.enabled or not self._client:
             return None
+        website_context = []
+        chars_used = 0
+        max_chars = 24000
+        for page in state.crawled_pages:
+            text = page.text or page.markdown or ""
+            if text and chars_used < max_chars:
+                snippet = text[: max_chars - chars_used]
+                website_context.append({"url": page.url, "text": snippet})
+                chars_used += len(snippet)
+
         summary = {
             "application": state.application.model_dump(mode="json"),
             "findings": [finding.model_dump(mode="json") for finding in state.findings],
             "reviewer_notes": state.reviewer_notes,
+            "website_content": website_context,
         }
         try:
             request = {
@@ -567,8 +578,9 @@ class GroqAdapter:
                     {
                         "role": "system",
                         "content": (
-                            "You assist a human pre-approval reviewer. Answer from the supplied review only. "
-                            "Do not approve or deny. Explain missing evidence honestly and suggest a concrete next step."
+                            "You assist a human pre-approval reviewer. Answer from the supplied review and website_content. "
+                            "Do not approve or deny. If the user asks for information not in the findings, check the "
+                            "website_content to answer. If it's still missing, explain honestly and suggest a next step."
                         ),
                     },
                     {"role": "user", "content": json.dumps(summary) + "\n\nReviewer: " + message},
