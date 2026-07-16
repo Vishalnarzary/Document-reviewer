@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
 
 from .config import OUTPUT_DIR, settings
+from .browser_interaction import DEFAULT_LOCATION
 from .models import ApplicationData, Criterion, CrawledPage, Finding, FindingStatus, VisionCapture
 from .utils import atomic_json_write
 
@@ -73,9 +74,11 @@ class GroqAdapter:
         self.enabled = settings.groq_enabled
         self.model = settings.groq_model
         self.vision_model = settings.groq_vision_model
+        self.discovery_model = settings.groq_discovery_model
         self._client = None
         self.last_error: str | None = None
         self.last_vision_error: str | None = None
+        self.last_discovery_error: str | None = None
         self.cache_enabled = True
         if self.enabled:
             try:
@@ -200,6 +203,72 @@ class GroqAdapter:
                     return None
                 continue
         return None
+
+    async def discover_official_pages(
+        self,
+        application: ApplicationData,
+        start_url: str,
+    ) -> list[str]:
+        """Discover crawl candidates only; returned URLs never become evidence by themselves."""
+        if not self.enabled or not self._client:
+            return []
+        hostname = (urlsplit(start_url).hostname or "").lower().removeprefix("www.")
+        if not hostname:
+            return []
+        self.last_discovery_error = None
+        system = (
+            "Use one web search to find current official public pages. Return only a JSON object with a urls "
+            "array containing at most three URLs. Pages must be on the supplied official domain and should "
+            "directly show the requested offering, a nearby location, or its current public price. Do not "
+            "return search pages, cached copies, social media, directories, or third-party sites."
+        )
+        user = (
+            f"Official domain: {hostname}\n"
+            f"Provider: {application.provider_name or hostname}\n"
+            f"Requested offering: {application.requested_item or application.category or 'public offering'}\n"
+            f"Public lookup location: {DEFAULT_LOCATION}"
+        )
+        try:
+            response = await self._create_completion(
+                {
+                    "model": self.discovery_model,
+                    "temperature": 0,
+                    "max_completion_tokens": 1000,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                    "search_settings": {
+                        "include_domains": [hostname],
+                        "country": "united states",
+                    },
+                }
+            )
+            raw = (response.choices[0].message.content or "").strip()
+            if raw.startswith("```"):
+                raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.I)
+            data = json.loads(raw)
+            candidates = data.get("urls", []) if isinstance(data, dict) else []
+        except Exception as exc:
+            self.last_discovery_error = f"{type(exc).__name__}: {exc}"[:500]
+            return []
+        verified: list[str] = []
+        for value in candidates if isinstance(candidates, list) else []:
+            try:
+                parts = urlsplit(str(value).strip())
+            except Exception:
+                continue
+            candidate_host = (parts.hostname or "").lower().removeprefix("www.")
+            if parts.scheme != "https" or not candidate_host or not (
+                candidate_host == hostname or candidate_host.endswith("." + hostname)
+            ):
+                continue
+            clean = parts._replace(fragment="").geturl()
+            if clean not in verified:
+                verified.append(clean)
+            if len(verified) >= 3:
+                break
+        return verified
 
     async def extract_application(self, text: str, baseline: ApplicationData) -> ApplicationData | None:
         from .checklists import load_checklists

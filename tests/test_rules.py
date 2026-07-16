@@ -25,7 +25,7 @@ from app.models import (
     VisionCapture,
 )
 from app.research import heuristic_evaluate
-from app.research import _link_relevance, _same_domain
+from app.research import _is_unusable_page, _link_relevance, _same_domain
 from app.utils import format_exception, safe_public_url
 from app.vision import (
     _application_context_tokens,
@@ -93,6 +93,55 @@ def test_link_ranking_uses_current_request_and_checklist_terms():
     relevant = _link_relevance("/support/studio-membership Individual studio plans", application, criteria)
     unrelated = _link_relevance("/about Board and staff", application, criteria)
     assert relevant > unrelated
+
+
+def test_generic_error_pages_are_excluded_from_research():
+    assert _is_unusable_page(
+        CrawledPage(url="https://example.org/find", title="Server error", text="500 Server error")
+    )
+    assert _is_unusable_page(
+        CrawledPage(url="https://example.org", title="Home", text="Checking your browser with Cloudflare")
+    )
+    assert not _is_unusable_page(
+        CrawledPage(url="https://example.org/locations/downtown", title="Downtown", text="Classic plan $19 per month")
+    )
+
+
+def test_compound_discovery_keeps_only_official_https_pages():
+    from types import SimpleNamespace
+    import asyncio
+
+    class DiscoveryStub(GroqAdapter):
+        async def _create_completion(self, request):
+            self.request = request
+            content = (
+                '{"urls":["https://www.example.org/locations/downtown",'
+                '"https://offers.example.org/pricing",'
+                '"https://evil.example.net/fake",'
+                '"http://example.org/insecure"]}'
+            )
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
+            )
+
+    adapter = DiscoveryStub.__new__(DiscoveryStub)
+    adapter.enabled = True
+    adapter._client = object()
+    adapter.discovery_model = "groq/compound-mini"
+    adapter.last_error = None
+    adapter.last_discovery_error = None
+    result = asyncio.run(
+        adapter.discover_official_pages(
+            ApplicationData(provider_name="Example", requested_item="Classic membership"),
+            "https://www.example.org/find",
+        )
+    )
+    assert result == [
+        "https://www.example.org/locations/downtown",
+        "https://offers.example.org/pricing",
+    ]
+    assert adapter.request["search_settings"]["include_domains"] == ["example.org"]
+    assert adapter.request["model"] == "groq/compound-mini"
 
 
 def test_recovered_text_evidence_satisfies_audit_gate(tmp_path, monkeypatch):

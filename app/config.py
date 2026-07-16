@@ -36,6 +36,7 @@ class Settings:
         "GROQ_VISION_MODEL",
         "meta-llama/llama-4-scout-17b-16e-instruct",
     )
+    groq_discovery_model: str = os.getenv("GROQ_DISCOVERY_MODEL", "groq/compound-mini")
     app_host: str = os.getenv("APP_HOST", "127.0.0.1")
     app_port: int = int(os.getenv("APP_PORT", "8000"))
     crawl_max_pages: int = int(os.getenv("CRAWL_MAX_PAGES", "5"))

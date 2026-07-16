@@ -4,6 +4,7 @@ import asyncio
 import math
 import re
 from collections import deque
+from collections.abc import Awaitable, Callable
 from urllib.parse import urljoin, urlparse, urlunparse
 
 from .browser_interaction import DEFAULT_GEOLOCATION, is_blocked_page, reveal_public_information
@@ -82,10 +83,26 @@ def _needs_interactive_recovery(pages: list[CrawledPage], criteria: list[Criteri
     return is_blocked_page(combined) or (price_requested and not re.search(r"\$\s*[0-9]", combined))
 
 
+def _is_unusable_page(page: CrawledPage) -> bool:
+    """Reject generic error/challenge documents before LLM analysis or evidence capture."""
+    text = normalize_space(page.text or page.markdown).lower()
+    title = normalize_space(page.title).lower()
+    if is_blocked_page(text):
+        return True
+    error_titles = {"server error", "access denied", "page not found", "not found"}
+    error_phrases = (
+        "500 server error",
+        "sorry, something went wrong",
+        "the page you requested was not found",
+    )
+    return title in error_titles or any(phrase in text[:500] for phrase in error_phrases)
+
+
 async def crawl_site(
     url: str,
     application: ApplicationData,
     criteria: list[Criterion],
+    discover_pages: Callable[[ApplicationData, str], Awaitable[list[str]]] | None = None,
 ) -> tuple[list[CrawledPage], list[str]]:
     valid, reason = safe_public_url(url)
     if not valid:
@@ -155,6 +172,9 @@ async def crawl_site(
                         text=text,
                     )
                     _relevance(page, application, criteria)
+                    if _is_unusable_page(page):
+                        warnings.append(f"Could not use {current}: The website returned an error or access-verification page.")
+                        continue
                     pages.append(page)
                     if depth >= settings.crawl_max_depth:
                         continue
@@ -189,6 +209,36 @@ async def crawl_site(
             warnings.append("Recovered: Playwright refreshed the rendered public website text.")
         elif fallback_warning:
             warnings.append(fallback_warning)
+    if discover_pages and (not pages or _needs_interactive_recovery(pages, criteria)):
+        discovered_urls = await discover_pages(application, url)
+        recovered_pages: list[CrawledPage] = []
+        recovery_warnings: list[str] = []
+        for candidate in discovered_urls[:3]:
+            candidate_pages, candidate_warnings = await crawl_site(
+                candidate,
+                application,
+                criteria,
+                discover_pages=None,
+            )
+            recovered_pages.extend(
+                page for page in candidate_pages if not _is_unusable_page(page)
+            )
+            recovery_warnings.extend(candidate_warnings)
+            if recovered_pages and not _needs_interactive_recovery(recovered_pages, criteria):
+                break
+        if recovered_pages:
+            by_url = {
+                _canonical_url(page.url): page
+                for page in [*pages, *recovered_pages]
+                if not _is_unusable_page(page)
+            }
+            pages = list(by_url.values())[: settings.crawl_max_pages]
+            if not _needs_interactive_recovery(pages, criteria):
+                warnings = [
+                    "Recovered: Groq discovered an official same-domain page after the submitted website route was blocked or unusable."
+                ]
+            else:
+                warnings.extend(recovery_warnings)
     pages.sort(key=lambda page: page.score, reverse=True)
     return pages, warnings
 

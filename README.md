@@ -329,6 +329,7 @@ rate-limit retry logic (6 × 10 s), and SSRF protection.
 | `GROQ_API_KEY` | *(required)* | Your Groq API key from console.groq.com |
 | `GROQ_MODEL` | `openai/gpt-oss-20b` | Groq text model for analysis and chat |
 | `GROQ_VISION_MODEL` | `meta-llama/llama-4-scout-17b-16e-instruct` | Groq model for scanned forms, screenshots, and image-based prices |
+| `GROQ_DISCOVERY_MODEL` | `groq/compound-mini` | Domain-restricted official-page discovery when the submitted route is blocked or broken |
 | `APP_HOST` | `127.0.0.1` | Bind address for the local server |
 | `APP_PORT` | `8000` | Port for the local server |
 | `CRAWL_MAX_PAGES` | `5` | Maximum provider pages to crawl per review |

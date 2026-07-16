@@ -23,7 +23,7 @@ from .storage import store
 from .workflow import workflow
 
 
-ANALYSIS_PIPELINE_VERSION = "dynamic-checklists-vision-v26"
+ANALYSIS_PIPELINE_VERSION = "dynamic-checklists-vision-v27"
 
 
 app = FastAPI(
@@ -47,6 +47,7 @@ async def health() -> dict:
         "groq_configured": workflow.groq.enabled,
         "groq_model": workflow.groq.model,
         "groq_vision_model": workflow.groq.vision_model,
+        "groq_discovery_model": workflow.groq.discovery_model,
         "analysis_pipeline": ANALYSIS_PIPELINE_VERSION,
     }
 

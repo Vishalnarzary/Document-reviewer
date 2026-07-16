@@ -391,7 +391,12 @@ class ReviewWorkflow:
             shutil.rmtree(evidence_dir)
         criteria = checklist["criteria"]
         _update_progress(progress, 34, "Crawling relevant public website pages")
-        pages, crawl_warnings = await crawl_site(state.application.website_url or "", state.application, criteria)
+        pages, crawl_warnings = await crawl_site(
+            state.application.website_url or "",
+            state.application,
+            criteria,
+            discover_pages=self.groq.discover_official_pages if self.groq.enabled else None,
+        )
         _update_progress(progress, 52, f"Collected {len(pages)} website page(s)")
         state.crawled_pages = pages
         baseline = heuristic_evaluate(state.application, criteria, pages)
@@ -662,6 +667,8 @@ class ReviewWorkflow:
                     "groq_vision_images": len(vision_captures),
                     "groq_vision_analysis": vision_findings is not None,
                     "groq_vision_error": self.groq.last_vision_error,
+                    "groq_discovery_model": self.groq.discovery_model if self.groq.enabled else None,
+                    "groq_discovery_error": self.groq.last_discovery_error,
                     "crawl_notes": crawl_warnings,
                 },
             )
