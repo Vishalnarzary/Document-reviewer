@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .models import ReviewState
 
 
-ANALYSIS_CACHE_VERSION = "relevant-snippets-v10"
+ANALYSIS_CACHE_VERSION = "relevant-snippets-v11"
 RATE_LIMIT_RETRY_DELAY_SECONDS = 10
 RATE_LIMIT_MAX_RETRIES = 6
 
@@ -379,6 +379,29 @@ class GroqAdapter:
             return cached
         observations: list[dict] = []
         coverage: list[dict] = []
+
+        def collect_validated_observations(data: dict | None) -> None:
+            if not data:
+                return
+            for observation in data.get("observations", []):
+                if not isinstance(observation, dict):
+                    continue
+                criterion_id = observation.get("criterion_id")
+                url = observation.get("url")
+                matched_url = page_url_by_key.get(_canonical_evidence_url(str(url or "")))
+                quote = _normalize_evidence_text(str(observation.get("quote") or ""))
+                if criterion_id not in criterion_ids or not matched_url or not quote:
+                    continue
+                if quote.lower() not in page_text_by_url[matched_url].lower():
+                    continue
+                item = {
+                    "criterion_id": criterion_id,
+                    "url": matched_url,
+                    "quote": quote,
+                    "analysis": str(observation.get("analysis") or "").strip(),
+                }
+                if item not in observations:
+                    observations.append(item)
         scan_work: list[tuple[CrawledPage, int, int, str]] = []
         for page in analysis_pages:
             page_text = page.text or page.markdown
@@ -406,27 +429,43 @@ class GroqAdapter:
             # No public conclusion is safe if even one chunk was not analyzed.
             if data is None:
                 return None
-            for observation in data.get("observations", []):
-                if not isinstance(observation, dict):
-                    continue
-                criterion_id = observation.get("criterion_id")
-                url = observation.get("url")
-                matched_url = page_url_by_key.get(_canonical_evidence_url(str(url or "")))
-                quote = _normalize_evidence_text(str(observation.get("quote") or ""))
-                if criterion_id not in criterion_ids or not matched_url or not quote:
-                    continue
-                if quote.lower() not in page_text_by_url[matched_url].lower():
-                    continue
-                observations.append(
-                    {
-                        "criterion_id": criterion_id,
-                        "url": matched_url,
-                        "quote": quote,
-                        "analysis": str(observation.get("analysis") or "").strip(),
-                    }
-                )
+            collect_validated_observations(data)
             if progress:
                 progress(completed, len(scan_work))
+
+        price_criteria = [criterion for criterion in criteria if _is_price_criterion(criterion)]
+        price_criterion_ids = {criterion.id for criterion in price_criteria}
+        if price_criterion_ids and not any(
+            observation["criterion_id"] in price_criterion_ids for observation in observations
+        ):
+            focused_criteria_json = json.dumps(
+                [criterion.model_dump(mode="json") for criterion in price_criteria], indent=2
+            )
+            for page, passage in _focused_offering_price_passages(application, pages):
+                coverage.append(
+                    {
+                        "url": page.url,
+                        "focused_offering_price_passage": True,
+                        "characters": len(passage),
+                    }
+                )
+                user = (
+                    f"CRITERIA:\n{focused_criteria_json}\n\n"
+                    f"NON-IDENTIFYING APPLICATION PARAMETERS:\n{public_application_json}\n\n"
+                    f"URL: {page.url}\nTITLE: {page.title}\n"
+                    f"FOCUSED RELEVANT SNIPPET:\nSOURCE TEXT:\n{passage}"
+                )
+                data = await self._structured(
+                    scan_system, user, observation_schema, "focused_price_observations"
+                )
+                if data is None:
+                    return None
+                collect_validated_observations(data)
+                if any(
+                    observation["criterion_id"] in price_criterion_ids
+                    for observation in observations
+                ):
+                    break
 
         schema = {
             "type": "object",
@@ -905,6 +944,77 @@ def _relevant_snippet_pages(
             text = "\n\n---\n\n".join(snippets)
             snippet_pages.append(page.model_copy(update={"markdown": text, "text": text}))
     return snippet_pages
+
+
+def _focused_offering_price_passages(
+    application: ApplicationData,
+    pages: list[CrawledPage],
+    max_passages: int = 4,
+) -> list[tuple[CrawledPage, str]]:
+    """Select compact offering/amount windows for a second LLM pass.
+
+    This is retrieval only: a passage cannot become a finding unless Groq analyzes
+    it and returns an exact quote that is verified against the crawled page.
+    """
+    generic_terms = {
+        "activity", "annual", "class", "classes", "course", "fee", "fees", "gym",
+        "lesson", "lessons", "membership", "monthly", "plan", "program", "service",
+        "services", "session", "sessions", "the",
+    }
+    offering_tokens = {
+        token
+        for token in re.findall(r"[a-z0-9]+", (application.requested_item or "").lower())
+        if len(token) >= 4 and token not in generic_terms and not token.isdigit()
+    }
+    if not offering_tokens:
+        return []
+    money_pattern = re.compile(
+        r"(?:[$€£]\s*[0-9]|\b(?:usd|eur|gbp)\s*[0-9]|"
+        r"[0-9][0-9,.]*\s*(?:per\s+(?:month|year)|/\s*(?:mo|yr)))",
+        re.IGNORECASE,
+    )
+    ranked: list[tuple[int, int, CrawledPage, str]] = []
+    serial = 0
+    for page in pages:
+        lines = [
+            _normalize_evidence_text(line)
+            for line in (page.markdown or page.text).splitlines()
+        ]
+        lines = [line for line in lines if line]
+        for index, line in enumerate(lines):
+            line_tokens = set(re.findall(r"[a-z0-9]+", line.lower()))
+            matched = offering_tokens.intersection(line_tokens)
+            if not matched:
+                continue
+            start = max(0, index - 1)
+            end = min(len(lines), index + 4)
+            passage = " ".join(lines[start:end])
+            if not money_pattern.search(passage):
+                continue
+            nearest_money = min(
+                (
+                    abs(candidate_index - index)
+                    for candidate_index in range(start, end)
+                    if money_pattern.search(lines[candidate_index])
+                ),
+                default=10,
+            )
+            score = len(matched) * 30 + max(0, 12 - nearest_money)
+            ranked.append((score, -serial, page, passage))
+            serial += 1
+    results: list[tuple[CrawledPage, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for _, _, page, passage in sorted(
+        ranked, key=lambda item: (item[0], item[1]), reverse=True
+    ):
+        key = (page.url, passage.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append((page, passage))
+        if len(results) >= max_passages:
+            break
+    return results
 
 
 def _analysis_cache_key(

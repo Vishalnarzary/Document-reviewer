@@ -23,7 +23,7 @@ from .storage import store
 from .workflow import workflow
 
 
-ANALYSIS_PIPELINE_VERSION = "dynamic-checklists-vision-v27"
+ANALYSIS_PIPELINE_VERSION = "dynamic-checklists-vision-v28"
 
 
 app = FastAPI(

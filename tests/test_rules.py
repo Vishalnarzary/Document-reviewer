@@ -12,6 +12,7 @@ from app.groq_client import (
     GroqAdapter,
     _analysis_cache_key,
     _deduplicated_analysis_pages,
+    _focused_offering_price_passages,
     _public_analysis_context,
     _text_chunks,
 )
@@ -142,6 +143,25 @@ def test_compound_discovery_keeps_only_official_https_pages():
     ]
     assert adapter.request["search_settings"]["include_domains"] == ["example.org"]
     assert adapter.request["model"] == "groq/compound-mini"
+
+
+def test_focused_price_passage_keeps_requested_plan_and_nearby_amount():
+    page = CrawledPage(
+        url="https://example.org/locations/downtown/offers",
+        title="Select a membership",
+        markdown=(
+            "Premium plan\n$39 /mo\nBring a guest\n\n"
+            "Classic\n$19 /mo\nplus taxes & fees\nUnlimited access to your home club\n\n"
+            "Cookie preferences\nAnnual privacy request statistics: $500"
+        ),
+        text="",
+    )
+    passages = _focused_offering_price_passages(
+        ApplicationData(requested_item="Classic Gym Membership"), [page]
+    )
+    assert passages
+    assert "Classic $19 /mo" in passages[0][1]
+    assert "Cookie preferences" not in passages[0][1]
 
 
 def test_recovered_text_evidence_satisfies_audit_gate(tmp_path, monkeypatch):
