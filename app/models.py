@@ -103,6 +103,7 @@ class CrawledPage(BaseModel):
     markdown: str = ""
     text: str = ""
     score: float = 0
+    screenshot_path: str | None = None
 
 
 class VisionCapture(BaseModel):

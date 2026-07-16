@@ -7,7 +7,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from .checklists import get_checklist
-from .evidence import capture_evidence, enforce_evidence_gate, materialize_recovered_text_evidence
+from .evidence import (
+    capture_evidence,
+    enforce_evidence_gate,
+    materialize_crawler_screenshot_evidence,
+    materialize_recovered_text_evidence,
+)
 from .extraction import extract_application
 from .groq_client import GroqAdapter
 from .models import AuditEvent, ChatMessage, CrawledPage, Criterion, Finding, FindingStatus, ReviewPhase, ReviewState
@@ -396,6 +401,7 @@ class ReviewWorkflow:
             state.application,
             criteria,
             discover_pages=self.groq.discover_official_pages if self.groq.enabled else None,
+            screenshot_dir=review_dir / "evidence" / "raw" / "crawler",
         )
         _update_progress(progress, 52, f"Collected {len(pages)} website page(s)")
         state.crawled_pages = pages
@@ -608,6 +614,15 @@ class ReviewWorkflow:
             review_dir,
             state.findings,
             fallback_url=state.application.website_url,
+        )
+        state.evidence.extend(
+            materialize_crawler_screenshot_evidence(
+                state.id,
+                review_dir,
+                state.findings,
+                pages,
+                state.evidence,
+            )
         )
         state.evidence.extend(
             materialize_vision_evidence(

@@ -227,6 +227,121 @@ def materialize_recovered_text_evidence(
     return records
 
 
+def materialize_crawler_screenshot_evidence(
+    review_id: str,
+    review_dir: Path,
+    findings: list[Finding],
+    pages: list[CrawledPage],
+    existing_evidence: list[EvidenceRecord],
+) -> list[EvidenceRecord]:
+    """Use screenshots preserved by the successful Crawl4AI browser session.
+
+    Standalone Playwright can receive an anti-bot page even when Crawl4AI rendered
+    the real source. These captures preserve that real render and crop near the
+    quote's relative text position; recovered text cards remain the final fallback.
+    """
+    page_by_url = {
+        page.url: page
+        for page in pages
+        if page.screenshot_path and (ROOT_DIR / page.screenshot_path).is_file()
+    }
+    if not page_by_url:
+        return []
+    targeted = {
+        record.criterion_id
+        for record in existing_evidence
+        if record.kind == "targeted" and record.criterion_id
+    }
+    records: list[EvidenceRecord] = []
+    full_record_by_url: dict[str, str] = {}
+    captured_at = datetime.now(timezone.utc)
+    for finding in findings:
+        if (
+            finding.status != FindingStatus.FOUND
+            or finding.criterion_id in targeted
+            or not finding.url
+            or not finding.quote
+            or finding.url not in page_by_url
+        ):
+            continue
+        page = page_by_url[finding.url]
+        source = ROOT_DIR / str(page.screenshot_path)
+        if page.url not in full_record_by_url:
+            full_id = f"EV-CRAWL-FULL-{len(full_record_by_url) + 1:02d}"
+            stamped_full = (
+                review_dir / "evidence" / "full" / f"{_slug(page.url)}-crawler-stamped.png"
+            )
+            stamp_image(
+                source,
+                stamped_full,
+                page.url,
+                "Full-page website record (crawler render)",
+                review_id,
+                captured_at,
+            )
+            records.append(
+                EvidenceRecord(
+                    id=full_id,
+                    kind="full_page",
+                    url=page.url,
+                    captured_at=captured_at.isoformat(),
+                    raw_path=relative_to_root(source, ROOT_DIR),
+                    stamped_path=relative_to_root(stamped_full, ROOT_DIR),
+                    sha256=sha256_file(stamped_full),
+                )
+            )
+            full_record_by_url[page.url] = full_id
+        full_id = full_record_by_url[page.url]
+        quote = re.sub(r"\s+", " ", finding.quote).strip()
+        haystack = re.sub(r"\s+", " ", page.text or page.markdown).strip()
+        quote_position = haystack.lower().find(quote.lower())
+        raw_target = (
+            review_dir / "evidence" / "raw" / f"{_slug(finding.criterion_id)}-crawler.png"
+        )
+        raw_target.parent.mkdir(parents=True, exist_ok=True)
+        with Image.open(source).convert("RGB") as screenshot:
+            width, height = screenshot.size
+            crop_height = min(height, max(650, min(950, int(width * 0.9))))
+            ratio = max(0, quote_position) / max(1, len(haystack))
+            center_y = int(ratio * height)
+            # Keep generous context above the quote so a price remains visibly
+            # attached to its product, plan, course, or membership heading.
+            crop_y = max(0, min(center_y - 360, height - crop_height))
+            screenshot.crop((0, crop_y, width, crop_y + crop_height)).save(
+                raw_target, format="PNG", optimize=True
+            )
+        stamped_target = (
+            review_dir
+            / "evidence"
+            / "targeted"
+            / f"{_slug(finding.criterion_id)}-crawler-stamped.png"
+        )
+        stamp_image(
+            raw_target,
+            stamped_target,
+            page.url,
+            f"Evidence: {finding.label}",
+            review_id,
+            captured_at,
+        )
+        evidence_id = f"EV-CRAWL-{len(records):03d}"
+        records.append(
+            EvidenceRecord(
+                id=evidence_id,
+                criterion_id=finding.criterion_id,
+                kind="targeted",
+                url=page.url,
+                captured_at=captured_at.isoformat(),
+                raw_path=relative_to_root(raw_target, ROOT_DIR),
+                stamped_path=relative_to_root(stamped_target, ROOT_DIR),
+                quote=quote,
+                sha256=sha256_file(stamped_target),
+            )
+        )
+        finding.evidence_ids.extend([full_id, evidence_id])
+    return records
+
+
 async def capture_evidence(
     review_id: str,
     review_dir: Path,
@@ -283,6 +398,8 @@ async def capture_evidence(
                     stamped_full = review_dir / "evidence" / "full" / f"page-{page_index:02d}-full-stamped.png"
                     raw_full.parent.mkdir(parents=True, exist_ok=True)
                     await page.screenshot(path=str(raw_full), full_page=True, animations="disabled")
+                    if blocked_page:
+                        continue
                     stamp_image(raw_full, stamped_full, final_url, "Full-page website record", review_id, captured_at)
                     full_id = f"EV-FULL-{page_index:02d}"
                     records.append(
@@ -297,8 +414,6 @@ async def capture_evidence(
                         )
                     )
                     for finding in [item for item in candidates if item.url == url]:
-                        if blocked_page:
-                            continue
                         quote = (finding.quote or "").strip()
                         if not quote:
                             continue

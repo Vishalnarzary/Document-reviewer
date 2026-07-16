@@ -5,6 +5,7 @@ from app.browser_interaction import field_default, is_blocked_page, safe_action_
 from app.evidence import (
     enforce_evidence_gate,
     evidence_locator_candidates,
+    materialize_crawler_screenshot_evidence,
     materialize_recovered_text_evidence,
     stamp_image,
 )
@@ -186,6 +187,40 @@ def test_recovered_text_evidence_satisfies_audit_gate(tmp_path, monkeypatch):
     enforce_evidence_gate([finding], records)
     assert finding.status == FindingStatus.FOUND
     assert any(record.kind == "targeted" and record.criterion_id == "published_fee" for record in records)
+
+
+def test_crawler_render_is_used_before_recovered_text_card(tmp_path, monkeypatch):
+    from PIL import Image
+
+    monkeypatch.setattr("app.evidence.ROOT_DIR", tmp_path)
+    review_dir = tmp_path / "output" / "reviews" / "review-1"
+    source = review_dir / "evidence" / "raw" / "crawler" / "offers.png"
+    source.parent.mkdir(parents=True)
+    Image.new("RGB", (900, 1800), "#6a1b9a").save(source)
+    page = CrawledPage(
+        url="https://example.org/offers",
+        title="Select a membership",
+        markdown="Premium $39 /mo\nClassic $19 /mo plus taxes and fees\nMembership details",
+        text="Premium $39 /mo Classic $19 /mo plus taxes and fees Membership details",
+        screenshot_path=str(source.relative_to(tmp_path)),
+    )
+    finding = Finding(
+        criterion_id="published_fee",
+        label="Membership fee is published",
+        status=FindingStatus.FOUND,
+        note="The Classic fee is visible.",
+        url=page.url,
+        quote="Classic $19 /mo plus taxes and fees",
+        source="groq",
+    )
+    records = materialize_crawler_screenshot_evidence(
+        "review-1", review_dir, [finding], [page], []
+    )
+    assert any(record.kind == "full_page" for record in records)
+    targeted = next(record for record in records if record.kind == "targeted")
+    assert targeted.criterion_id == "published_fee"
+    assert (tmp_path / targeted.stamped_path).is_file()
+    assert finding.evidence_ids
 
 
 def test_hri_laptop_is_flagged_as_excluded():

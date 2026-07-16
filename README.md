@@ -58,8 +58,11 @@ URLs, or prewritten prices. When a real location field is visible, Playwright ca
 safe New York default and continue to the public pricing view; it never invents `/gyms`,
 `/clubs`, or location URLs. If readable text is unavailable or a price is embedded in an
 image, the Groq Vision track analyses the captured page before the item is sent for manual
-review. Anti-bot pages that cannot be read remain `Needs Review` rather than receiving a
-hardcoded conclusion.
+review. When standalone Playwright receives an anti-bot challenge but Crawl4AI successfully
+renders the real page, the successful crawler screenshot is preserved, cropped near the
+validated quote, and timestamped as the targeted evidence. A crawl-text evidence card is
+used only when neither browser produced a genuine page image. Anti-bot pages that cannot be
+read remain `Needs Review` rather than receiving a hardcoded conclusion.
 
 **Cross-validation — 5-state confidence**
 

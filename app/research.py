@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import hashlib
 import math
 import re
 from collections import deque
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from urllib.parse import urljoin, urlparse, urlunparse
 
 from .browser_interaction import DEFAULT_GEOLOCATION, is_blocked_page, reveal_public_information
-from .config import settings
+from .config import ROOT_DIR, settings
 from .models import ApplicationData, CrawledPage, Criterion, Finding, FindingStatus
-from .utils import extract_price, format_exception, normalize_space, safe_public_url
+from .utils import extract_price, format_exception, normalize_space, relative_to_root, safe_public_url
 
 
 def _canonical_url(value: str) -> str:
@@ -103,6 +106,7 @@ async def crawl_site(
     application: ApplicationData,
     criteria: list[Criterion],
     discover_pages: Callable[[ApplicationData, str], Awaitable[list[str]]] | None = None,
+    screenshot_dir: Path | None = None,
 ) -> tuple[list[CrawledPage], list[str]]:
     valid, reason = safe_public_url(url)
     if not valid:
@@ -128,6 +132,7 @@ async def crawl_site(
         exclude_external_links=True,
         remove_overlay_elements=True,
         wait_for_images=False,
+        screenshot=screenshot_dir is not None,
         verbose=False,
     )
     pages: list[CrawledPage] = []
@@ -175,6 +180,20 @@ async def crawl_site(
                     if _is_unusable_page(page):
                         warnings.append(f"Could not use {current}: The website returned an error or access-verification page.")
                         continue
+                    screenshot = getattr(result, "screenshot", None)
+                    if screenshot_dir is not None and screenshot:
+                        try:
+                            screenshot_dir.mkdir(parents=True, exist_ok=True)
+                            digest = hashlib.sha256(page.url.encode("utf-8")).hexdigest()[:16]
+                            target = screenshot_dir / f"crawl4ai-{digest}.png"
+                            encoded = str(screenshot).split(",", 1)[-1]
+                            target.write_bytes(base64.b64decode(encoded))
+                            page.screenshot_path = relative_to_root(target, ROOT_DIR)
+                        except Exception as exc:
+                            warnings.append(
+                                f"Could not preserve the rendered crawler screenshot for {current}: "
+                                f"{format_exception(exc)}"
+                            )
                     pages.append(page)
                     if depth >= settings.crawl_max_depth:
                         continue
@@ -219,6 +238,7 @@ async def crawl_site(
                 application,
                 criteria,
                 discover_pages=None,
+                screenshot_dir=screenshot_dir,
             )
             recovered_pages.extend(
                 page for page in candidate_pages if not _is_unusable_page(page)
