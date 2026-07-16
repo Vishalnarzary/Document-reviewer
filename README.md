@@ -223,11 +223,12 @@ Document-reviewer/
 
 ## Committed sample outputs
 
-Two complete report packages are committed under `sample_outputs/`:
+Three complete report packages are committed under `sample_outputs/`:
 
 | Folder | Sample | What it demonstrates |
 |---|---|---|
 | `Sample-01-GallopNYC/` | Community class — GallopNYC Recreational Riding | Evidence found: published fees, public access, subject match, and application price match |
+| `Sample-04-Planet-Fitness/` | Membership — Planet Fitness Classic Membership | Real rendered pricing evidence shows the location-specific Classic fee of `$19/month`, which does not match the `$15` application amount |
 | `Sample-05-Brooklyn-Museum/` | Membership - Brooklyn Museum Individual Membership | Evidence found: the public Individual membership fee is `$80` and matches the application |
 
 Each folder contains:
@@ -317,7 +318,7 @@ seven sample categories.
 .\.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-48 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
+52 tests cover: PDF extraction, scanned-form vision fallback, category detection, price
 normalization, two-stage price classification, checklist evaluation, HRI/OTPS exclusion
 detection, dual-track cross-validation, screenshot overlay correctness, report generation,
 evidence manifest integrity, dynamic checklist management, same-site navigation safeguards,
