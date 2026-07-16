@@ -418,16 +418,10 @@ class GroqAdapter:
             f"CRITERIA:\n{criteria_json}\n\n"
             f"NON-IDENTIFYING APPLICATION PARAMETERS:\n{public_application_json}\n\n"
             f"RELEVANT SNIPPET COVERAGE:\n{json.dumps(coverage, indent=2)}\n\n"
-            "RELEVANT WEBSITE SNIPPETS:\n"
-            + json.dumps(
-                [
-                    {"url": page.url, "title": page.title, "text": page.text or page.markdown}
-                    for page in analysis_pages
-                ],
-                indent=2,
-            )
-            + "\n\n"
-            f"VALIDATED OBSERVATIONS:\n{json.dumps(observations, indent=2)}"
+            # Every relevant snippet has already been analyzed above. Repeating
+            # all of that text here can exceed the model's request limit; the
+            # final pass needs only the exact, locally validated passages.
+            f"VALIDATED SOURCE PASSAGES:\n{json.dumps(observations, indent=2)}"
         )
         data = await self._structured(system, user, schema, "website_findings")
         if not data:

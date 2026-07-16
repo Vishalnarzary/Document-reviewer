@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from PIL import Image
 
 from .browser_interaction import DEFAULT_GEOLOCATION, reveal_public_information
 from .config import ROOT_DIR, settings
 from .evidence import stamp_image
-from .models import CrawledPage, Criterion, EvidenceRecord, Finding, FindingStatus, VisionCapture
+from .models import ApplicationData, CrawledPage, Criterion, EvidenceRecord, Finding, FindingStatus, VisionCapture
 from .utils import format_exception, relative_to_root, sha256_file
 
 
@@ -24,6 +26,49 @@ _ANTIBOT_TERMS = (
     "unusual traffic",
     "verify you are human",
 )
+
+_CONTEXT_STOPWORDS = {
+    "and", "for", "from", "membership", "member", "price", "program", "requested",
+    "service", "the", "with", "year",
+}
+
+
+def _canonical_url(url: str) -> str:
+    """Normalize only for deduplication; never invent or rewrite a destination."""
+    try:
+        parts = urlsplit(url.strip())
+        return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/") or "/", parts.query, ""))
+    except Exception:
+        return url.strip()
+
+
+def _vision_url_order(start_url: str, pages: list[CrawledPage], limit: int = 3) -> list[str]:
+    """Prefer crawler-ranked evidence pages over an unverified form URL."""
+    ordered: list[str] = []
+    seen: set[str] = set()
+    candidates = [page.url for page in sorted(pages, key=lambda page: page.score, reverse=True)]
+    candidates.append(start_url)
+    for candidate in candidates:
+        key = _canonical_url(candidate)
+        if candidate and key not in seen:
+            ordered.append(candidate)
+            seen.add(key)
+        if len(ordered) >= limit:
+            break
+    return ordered
+
+
+def _application_context_tokens(application: ApplicationData) -> list[str]:
+    text = " ".join(
+        value or ""
+        for value in (
+            application.requested_item,
+            application.category,
+            application.subject_area,
+        )
+    ).lower()
+    tokens = re.findall(r"[a-z0-9][a-z0-9'-]{2,}", text)
+    return list(dict.fromkeys(token for token in tokens if token not in _CONTEXT_STOPWORDS))[:12]
 
 
 def _is_price_criterion(criterion: Criterion) -> bool:
@@ -75,19 +120,16 @@ async def capture_vision_candidates(
     start_url: str,
     pages: list[CrawledPage],
     review_dir: Path,
+    application: ApplicationData,
 ) -> tuple[list[VisionCapture], list[str]]:
-    """Capture up to five bounded viewport images without bypassing access controls."""
+    """Capture targeted pricing context plus visual fallbacks without bypassing access controls."""
     try:
         from playwright.async_api import async_playwright
     except Exception as exc:
         return [], [f"Vision fallback browser is unavailable: {format_exception(exc)}"]
 
-    urls: list[str] = []
-    for candidate in [start_url, *(page.url for page in pages)]:
-        if candidate and candidate not in urls:
-            urls.append(candidate)
-        if len(urls) >= 3:
-            break
+    urls = _vision_url_order(start_url, pages)
+    context_tokens = _application_context_tokens(application)
     captures: list[VisionCapture] = []
     warnings: list[str] = []
     raw_dir = review_dir / "evidence" / "raw"
@@ -120,6 +162,96 @@ async def capture_vision_candidates(
                     height = await page.evaluate(
                         "Math.max(document.body?.scrollHeight || 0, document.documentElement.scrollHeight || 0)"
                     )
+                    targeted_candidates = await page.locator("body").evaluate(
+                        r"""(root, request) => {
+                            const amount = request.amount;
+                            const tokens = request.tokens || [];
+                            const visible = el => {
+                                const r = el.getBoundingClientRect();
+                                const style = getComputedStyle(el);
+                                return r.width >= 40 && r.height >= 16 && style.display !== 'none' && style.visibility !== 'hidden';
+                            };
+                            const money = /(?:\$|USD\s*)\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)/gi;
+                            const hasMoney = /(?:\$|USD\s*)\s*[0-9]/i;
+                            const leaves = Array.from(root.querySelectorAll('*')).filter(el => {
+                                const text = el.innerText || '';
+                                return visible(el) && text.length <= 500 && hasMoney.test(text);
+                            });
+                            const results = [];
+                            const used = new Set();
+                            for (const leaf of leaves) {
+                                const leafText = (leaf.innerText || '').replace(/\s+/g, ' ').trim();
+                                money.lastIndex = 0;
+                                const values = Array.from(leafText.matchAll(money)).map(m => Number(m[1].replace(/,/g, '')));
+                                const exact = amount != null && values.some(value => Math.abs(value - amount) < 0.005);
+                                let target = leaf.closest('table');
+                                if (!target) {
+                                    let current = leaf;
+                                    for (let depth = 0; current && depth < 7; depth += 1, current = current.parentElement) {
+                                        const text = (current.innerText || '').replace(/\s+/g, ' ').trim();
+                                        const rect = current.getBoundingClientRect();
+                                        const tokenHits = tokens.filter(token => text.toLowerCase().includes(token)).length;
+                                        if (visible(current) && text.length <= 3500 && rect.height <= 1400 && rect.width <= 1800 &&
+                                            (tokenHits > 0 || exact)) target = current;
+                                    }
+                                }
+                                target = target || leaf;
+                                const rect = target.getBoundingClientRect();
+                                const text = (target.innerText || '').replace(/\s+/g, ' ').trim();
+                                if (!visible(target) || rect.height > 1600 || rect.width > 1900 || text.length > 5000 || used.has(target)) continue;
+                                used.add(target);
+                                const tokenHits = tokens.filter(token => text.toLowerCase().includes(token)).length;
+                                const tableBonus = target.tagName === 'TABLE' ? 30 : 0;
+                                results.push({target, score: (exact ? 1000 : 0) + tokenHits * 80 + tableBonus, exact, tokenHits});
+                            }
+                            return results.sort((a, b) => b.score - a.score).slice(0, 3).map((item, index) => {
+                                item.target.setAttribute('data-evidence-vision-target', String(index));
+                                return {index, exact: item.exact, tokenHits: item.tokenHits};
+                            });
+                        }""",
+                        {"amount": application.requested_price, "tokens": context_tokens},
+                    )
+                    for candidate in targeted_candidates[:2]:
+                        if len(captures) >= settings.vision_max_images:
+                            break
+                        capture_number = len(captures) + 1
+                        png_path = raw_dir / f"vision-{capture_number:02d}.png"
+                        jpeg_path = raw_dir / f"vision-{capture_number:02d}.jpg"
+                        # Hide only already-visible fixed/sticky top chrome before
+                        # Playwright scrolls a pricing element into view. Otherwise
+                        # site navigation can cover the offering labels.
+                        await page.evaluate(
+                            """() => Array.from(document.querySelectorAll('*')).forEach(el => {
+                                const style = getComputedStyle(el);
+                                const rect = el.getBoundingClientRect();
+                                if ((style.position === 'fixed' || style.position === 'sticky') &&
+                                    rect.top < 250 && rect.bottom > 0 && rect.height < 400) {
+                                    el.style.setProperty('visibility', 'hidden', 'important');
+                                }
+                            })"""
+                        )
+                        target = page.locator(
+                            f'[data-evidence-vision-target="{int(candidate["index"])}"]'
+                        )
+                        await target.screenshot(
+                            path=str(png_path),
+                            animations="disabled",
+                            timeout=10000,
+                        )
+                        _prepare_vision_image(png_path, jpeg_path)
+                        png_path.unlink(missing_ok=True)
+                        descriptor = "targeted pricing context"
+                        if candidate.get("exact"):
+                            descriptor = "exact requested-price context"
+                        captures.append(
+                            VisionCapture(
+                                id=f"VIS-{capture_number:02d}",
+                                url=page.url,
+                                title=f"{title} — {descriptor}",
+                                path=str(jpeg_path),
+                                blocked=blocked,
+                            )
+                        )
                     money_positions = await page.locator("body").evaluate(
                         r"""root => Array.from(root.querySelectorAll('*'))
                             .filter(el => el.children.length <= 2 && /\$\s*[0-9]/.test(el.innerText || ''))

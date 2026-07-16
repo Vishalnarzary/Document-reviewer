@@ -506,6 +506,7 @@ class ReviewWorkflow:
                 state.application.website_url or "",
                 pages,
                 review_dir,
+                state.application,
             )
             vision_warnings.extend(preparation_warnings)
             if vision_captures:

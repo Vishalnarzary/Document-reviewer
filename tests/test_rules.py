@@ -27,7 +27,12 @@ from app.models import (
 from app.research import heuristic_evaluate
 from app.research import _link_relevance, _same_domain
 from app.utils import format_exception, safe_public_url
-from app.vision import materialize_vision_evidence, select_vision_fallback_criteria
+from app.vision import (
+    _application_context_tokens,
+    _vision_url_order,
+    materialize_vision_evidence,
+    select_vision_fallback_criteria,
+)
 from app.workflow import (
     _derive_exact_price_matches,
     _derive_explicit_public_access,
@@ -734,6 +739,33 @@ def test_vision_fallback_is_limited_to_antibot_or_unresolved_price():
     assert "crawler_or_antibot" in reasons
 
 
+def test_vision_capture_prefers_ranked_crawled_pages_and_deduplicates_start_url():
+    pages = [
+        CrawledPage(url="https://example.org/old-form", score=0.2),
+        CrawledPage(url="https://example.org/pricing/", score=4.2),
+        CrawledPage(url="https://example.org/details", score=1.5),
+    ]
+    assert _vision_url_order("https://example.org/pricing", pages) == [
+        "https://example.org/pricing/",
+        "https://example.org/details",
+        "https://example.org/old-form",
+    ]
+
+
+def test_vision_context_tokens_are_generic_and_request_specific():
+    application = ApplicationData(
+        requested_item="Individual pottery studio membership",
+        category="Community recreation",
+        subject_area="Ceramics",
+    )
+    tokens = _application_context_tokens(application)
+    assert "individual" in tokens
+    assert "pottery" in tokens
+    assert "studio" in tokens
+    assert "ceramics" in tokens
+    assert "membership" not in tokens
+
+
 def test_visual_found_survives_only_with_preserved_targeted_capture(tmp_path, monkeypatch):
     from PIL import Image
 
@@ -831,7 +863,7 @@ def test_groq_evaluation_sends_only_relevant_snippets():
     assert "REMOTE_IRRELEVANT_A" not in scan_calls[0]
     assert "REMOTE_IRRELEVANT_B" not in scan_calls[0]
     assert adapter.calls[-1][0] == "website_findings"
-    assert "RELEVANT WEBSITE SNIPPETS" in adapter.calls[-1][1]
+    assert "VALIDATED SOURCE PASSAGES" in adapter.calls[-1][1]
     assert '"url": "https://example.org/class"' in adapter.calls[-1][1]
     assert result and result[0].source == "groq"
     assert result[0].status == FindingStatus.FOUND
