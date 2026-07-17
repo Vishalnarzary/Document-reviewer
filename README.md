@@ -25,6 +25,7 @@ A Pre-Approvals Reviewer uploads a PDF application through a chat interface. The
 6. Captures date-stamped screenshots as audit evidence
 7. Produces an HTML report, PDF report, and a downloadable ZIP package
 8. Lets the reviewer ask follow-up questions, add notes, or request re-checks in plain language
+9. Add/Remove/edit checklist
 
 Items that require internal agency data (Life Plan alignment, budget approval, etc.) are
 listed separately and are **never guessed at**.
