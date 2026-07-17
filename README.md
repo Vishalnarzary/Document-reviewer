@@ -370,33 +370,8 @@ name, offering name, category, and requested price; never participant or coordin
 
 ## Deployment
 
-> ⚠️ **This application cannot be deployed on Vercel.**
->
-> Vercel is a serverless platform. This tool requires:
-> - A persistent Chromium browser process (Playwright)
-> - A writable file system for screenshots and reports
-> - Long-running requests (reviews take 2–8 minutes)
->
-> None of these are available in a serverless environment.
+This application is currently hosted in Railway.
 
-**Recommended hosting options:**
-
-| Platform | Notes |
-|---|---|
-| **Railway** | One-click Python app deployment; persistent disk; easiest option |
-| **Render** | Free tier available; supports long-running web services |
-| **Fly.io** | Good for Docker-based deployment; persistent volumes available |
-| **DigitalOcean App Platform** | Managed containers; straightforward setup |
-| **Any VPS** (DigitalOcean Droplet, Linode, etc.) | Most control; run `.\start.ps1` equivalent on Linux |
-
-**For all platforms**, you will need to set the `GROQ_API_KEY` environment variable in the
-platform's settings, and ensure Playwright can install Chromium during the build step:
-
-```bash
-pip install -r requirements.txt
-playwright install chromium
-python run.py
-```
 
 ---
 
